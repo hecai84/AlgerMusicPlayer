@@ -38,8 +38,8 @@
             :src="getImgUrl(userStore.user.avatarUrl)"
             @click="selectItem('user')"
           />
-          <div v-else class="mx-2 rounded-full cursor-pointer text-sm" @click="toLogin">
-            {{ t('comp.searchBar.login') }}
+          <div v-else class="mx-2 rounded-full cursor-pointer text-2xl">
+            ≡
           </div>
         </div>
       </template>
@@ -49,10 +49,10 @@
           <span class="username">{{ userStore.user?.nickname || 'Theodore' }}</span>
         </div>
         <div class="menu-items">
-          <div v-if="!userStore.user" class="menu-item" @click="toLogin">
+          <!-- <div v-if="!userStore.user" class="menu-item" @click="toLogin">
             <i class="iconfont ri-login-box-line"></i>
             <span>{{ t('comp.searchBar.toLogin') }}</span>
-          </div>
+          </div> -->
           <div v-if="userStore.user" class="menu-item" @click="selectItem('logout')">
             <i class="iconfont ri-logout-box-r-line"></i>
             <span>{{ t('comp.searchBar.logout') }}</span>
@@ -114,11 +114,7 @@
       </div>
     </n-popover>
 
-    <coffee :alipay-q-r="alipay" :wechat-q-r="wechat">
-      <div class="github" @click="toGithub">
-        <i class="ri-github-fill"></i>
-      </div>
-    </coffee>
+
   </div>
 </template>
 
@@ -128,9 +124,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { getSearchKeyword } from '@/api/home';
 import { getUserDetail } from '@/api/login';
-import alipay from '@/assets/alipay.png';
-import wechat from '@/assets/wechat.png';
-import Coffee from '@/components/Coffee.vue';
 import { useZoom } from '@/hooks/useZoom';
 import { SEARCH_TYPES, USER_SET_OPTIONS } from '@/const/bar-const';
 import { useSearchStore } from '@/store/modules/search';
@@ -201,9 +194,9 @@ const restartApp = () => {
   window.electron.ipcRenderer.send('restart');
 };
 
-const toLogin = () => {
-  router.push('/user');
-};
+// const toLogin = () => {
+//   router.push('/user');
+// };
 
 // 页面初始化
 onMounted(() => {
@@ -302,9 +295,9 @@ const selectItem = async (key: string) => {
   }
 };
 
-const toGithub = () => {
-  window.open('http://donate.alger.fun/download', '_blank');
-};
+// const toGithub = () => {
+//   window.open('http://donate.alger.fun/download', '_blank');
+// };
 
 const updateInfo = ref<UpdateResult>({
   hasUpdate: false,
