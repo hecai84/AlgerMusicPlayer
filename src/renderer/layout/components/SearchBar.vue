@@ -39,7 +39,7 @@
             @click="selectItem('user')"
           />
           <div v-else class="mx-2 rounded-full cursor-pointer text-2xl">
-            ≡
+            ···
           </div>
         </div>
       </template>
