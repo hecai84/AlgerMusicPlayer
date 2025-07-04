@@ -68,11 +68,11 @@
               </span>
             </n-ellipsis>
           </div>
-          <mini-play-bar
+          <simple-play-bar
             v-if="!config.hideMiniPlayBar"
             class="mt-4"
             :pure-mode-enabled="config.pureModeEnabled"
-            component
+            :isDark=" textColors.theme === 'dark'"
           />
         </div>
       </div>
@@ -96,7 +96,6 @@
           @mouseleave="mouseLeaveLayout"
         >
           <!-- 歌曲信息 -->
-
           <div ref="lrcContainer" class="music-lrc-container">
             <div
               v-if="config.hideCover"
@@ -153,7 +152,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import LyricSettings from '@/components/lyric/LyricSettings.vue';
-import MiniPlayBar from '@/components/player/MiniPlayBar.vue';
+import SimplePlayBar from '@/components/player/SimplePlayBar.vue';
 import LyricCorrectionControl from '@/components/lyric/LyricCorrectionControl.vue';
 import {
   artistList,
@@ -802,7 +801,7 @@ defineExpose({
   animation: spin 1s linear infinite;
 }
 
-.lyric-correction-btns-mac {
+.lyric-correction {
   /* 仅在 hover 歌词区域时显示 */
   .music-lrc:hover & {
     opacity: 1 !important;

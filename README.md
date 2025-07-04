@@ -44,12 +44,11 @@
   
 - 🎼 音乐功能
   - 支持歌单、MV、专辑等完整音乐服务
-  - 灰色音乐资源解析（基于 @unblockneteasemusic/server）
-  - 音乐单独解析
+  - 音乐资源解析（基于 @unblockneteasemusic/server）
   - EQ均衡器
   - 定时播放 远程控制播放 倍速播放
   - 高品质音乐
-  - 音乐文件下载（支持右键下载和批量下载, 附带歌词封面等信息）
+  - 音乐文件下载
   - 搜索 MV 音乐 专辑 歌单 bilibili
   - 音乐单独选择音源解析
 - 🚀 技术特性
@@ -75,17 +74,10 @@
 npm install
 npm run dev
 ```
-## 项目打包
-```bash
-# web
-npm run build 
-# win
-npm run build:win
-# mac
-npm run build:mac
-# linux
-npm run build:linux
-```
+## 开发文档
+点击这里[开发文档](./DEV.md)
+
+
 
 
 ## 赞赏☕️
@@ -103,5 +95,6 @@ npm run build:linux
 
 ## 欢迎提Issues
 
-## 免责声明
+## 声明
 本软件仅用于学习交流，禁止用于商业用途，否则后果自负。
+希望大家还是要多多支持官方正版，此软件仅用作开发教学。
