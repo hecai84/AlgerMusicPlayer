@@ -263,7 +263,8 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
     preload: join(__dirname, '../preload/index.js'),
     sandbox: false,
     contextIsolation: true,
-    webSecurity: false
+    webSecurity: false,
+    backgroundThrottling: false
   };
 
   console.log(`创建窗口，使用选项: ${JSON.stringify({
