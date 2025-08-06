@@ -15,6 +15,8 @@ export default {
   basic: {
     themeMode: 'Theme Mode',
     themeModeDesc: 'Switch between light/dark theme',
+    autoTheme: 'Follow System',
+    manualTheme: 'Manual Switch',
     language: 'Language Settings',
     languageDesc: 'Change display language',
     font: 'Font Settings',
@@ -64,11 +66,13 @@ export default {
     configureMusicSources: 'Configure Sources',
     selectedMusicSources: 'Selected sources:',
     noMusicSources: 'No sources selected',
-    gdmusicInfo: 'GD Music Station intelligently resolves music from multiple platforms automatically',
+    gdmusicInfo:
+      'GD Music Station intelligently resolves music from multiple platforms automatically',
     autoPlay: 'Auto Play',
     autoPlayDesc: 'Auto resume playback when reopening the app',
-    showStatusBar: "Show Status Bar",
-    showStatusBarContent: "You can display the music control function in your mac status bar (effective after a restart)"
+    showStatusBar: 'Show Status Bar',
+    showStatusBarContent:
+      'You can display the music control function in your mac status bar (effective after a restart)'
   },
   application: {
     closeAction: 'Close Action',
@@ -220,6 +224,26 @@ export default {
     lyricLines: 'Lyric Lines',
     mobileUnavailable: 'This setting is only available on mobile devices'
   },
+  themeColor: {
+    title: 'Lyric Theme Color',
+    presetColors: 'Preset Colors',
+    customColor: 'Custom Color',
+    preview: 'Preview',
+    previewText: 'Lyric Effect',
+    colorNames: {
+      'spotify-green': 'Spotify Green',
+      'apple-blue': 'Apple Blue',
+      'youtube-red': 'YouTube Red',
+      orange: 'Vibrant Orange',
+      purple: 'Mystic Purple',
+      pink: 'Cherry Pink'
+    },
+    tooltips: {
+      openColorPicker: 'Open Color Picker',
+      closeColorPicker: 'Close Color Picker'
+    },
+    placeholder: '#1db954'
+  },
   shortcutSettings: {
     title: 'Shortcut Settings',
     shortcut: 'Shortcut',
@@ -258,6 +282,6 @@ export default {
     addIp: 'Add IP',
     emptyListHint: 'Empty list means allow all IPs',
     saveSuccess: 'Remote control settings saved',
-    accessInfo: 'Remote control access address:',
+    accessInfo: 'Remote control access address:'
   }
 };

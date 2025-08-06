@@ -15,6 +15,8 @@ export default {
   basic: {
     themeMode: '主题模式',
     themeModeDesc: '切换日间/夜间主题',
+    autoTheme: '跟随系统',
+    manualTheme: '手动切换',
     language: '语言设置',
     languageDesc: '切换显示语言',
     font: '字体设置',
@@ -68,7 +70,7 @@ export default {
     autoPlay: '自动播放',
     autoPlayDesc: '重新打开应用时是否自动继续播放',
     showStatusBar: '是否显示状态栏控制功能',
-    showStatusBarContent: '可以在您的mac状态栏显示音乐控制功能(重启后生效)',
+    showStatusBarContent: '可以在您的mac状态栏显示音乐控制功能(重启后生效)'
   },
   application: {
     closeAction: '关闭行为',
@@ -220,6 +222,26 @@ export default {
     lyricLines: '歌词行数',
     mobileUnavailable: '此设置仅在移动端可用'
   },
+  themeColor: {
+    title: '歌词主题色',
+    presetColors: '预设颜色',
+    customColor: '自定义颜色',
+    preview: '预览效果',
+    previewText: '歌词效果',
+    colorNames: {
+      'spotify-green': 'Spotify 绿',
+      'apple-blue': '苹果蓝',
+      'youtube-red': 'YouTube 红',
+      orange: '活力橙',
+      purple: '神秘紫',
+      pink: '樱花粉'
+    },
+    tooltips: {
+      openColorPicker: '打开色板',
+      closeColorPicker: '关闭色板'
+    },
+    placeholder: '#1db954'
+  },
   shortcutSettings: {
     title: '快捷键设置',
     shortcut: '快捷键',
@@ -258,6 +280,6 @@ export default {
     addIp: '添加IP',
     emptyListHint: '空列表表示允许所有IP访问',
     saveSuccess: '远程控制设置已保存',
-    accessInfo: '远程控制访问地址:',
+    accessInfo: '远程控制访问地址:'
   }
 };

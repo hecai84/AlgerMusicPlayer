@@ -1,17 +1,15 @@
 import { createI18n } from 'vue-i18n';
 
-import enUS from './lang/en-US';
-import zhCN from './lang/zh-CN';
+import { DEFAULT_LANGUAGE, FALLBACK_LANGUAGE } from './languages';
+import { buildLanguageMessages } from './utils';
 
-const messages = {
-  'zh-CN': zhCN,
-  'en-US': enUS
-};
+// 使用工具函数构建语言消息对象
+const messages = buildLanguageMessages();
 
 const i18n = createI18n({
   legacy: false,
-  locale: 'zh-CN',
-  fallbackLocale: 'en-US',
+  locale: DEFAULT_LANGUAGE,
+  fallbackLocale: FALLBACK_LANGUAGE,
   messages,
   globalInjection: true,
   silentTranslationWarn: true,

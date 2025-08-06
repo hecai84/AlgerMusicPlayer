@@ -1,18 +1,28 @@
 import { is } from '@electron-toolkit/utils';
-import { app, BrowserWindow, nativeImage, globalShortcut, ipcMain, screen, session, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  nativeImage,
+  screen,
+  session,
+  shell
+} from 'electron';
 import Store from 'electron-store';
 import { join } from 'path';
+
 import {
-  DEFAULT_MAIN_WIDTH,
-  DEFAULT_MAIN_HEIGHT,
-  DEFAULT_MINI_WIDTH,
-  DEFAULT_MINI_HEIGHT,
   applyContentZoom,
-  saveWindowState,
   applyInitialState,
-  initWindowSizeHandlers,
+  DEFAULT_MAIN_HEIGHT,
+  DEFAULT_MAIN_WIDTH,
+  DEFAULT_MINI_HEIGHT,
+  DEFAULT_MINI_WIDTH,
   getWindowOptions,
   getWindowState,
+  initWindowSizeHandlers,
+  saveWindowState,
   WindowState
 } from './window-size';
 
@@ -21,6 +31,7 @@ const store = new Store();
 // 保存主窗口引用，以便在 activate 事件中使用
 let mainWindowInstance: BrowserWindow | null = null;
 let isPlaying = false;
+let isAppQuitting = false;
 // 保存迷你模式前的窗口状态
 let preMiniModeState: WindowState = {
   width: DEFAULT_MAIN_WIDTH,
@@ -29,6 +40,13 @@ let preMiniModeState: WindowState = {
   y: undefined,
   isMaximized: false
 };
+
+/**
+ * 设置应用退出状态
+ */
+export function setAppQuitting(quitting: boolean) {
+  isAppQuitting = quitting;
+}
 
 /**
  * 初始化代理设置
@@ -60,33 +78,31 @@ function setThumbarButtons(window: BrowserWindow) {
   window.setThumbarButtons([
     {
       tooltip: 'prev',
-      icon: nativeImage
-        .createFromPath(join(app.getAppPath(), 'resources/icons', 'prev.png')),
+      icon: nativeImage.createFromPath(join(app.getAppPath(), 'resources/icons', 'prev.png')),
       click() {
         window.webContents.send('global-shortcut', 'prevPlay');
-      },
+      }
     },
 
     {
       tooltip: isPlaying ? 'pause' : 'play',
-      icon: nativeImage
-        .createFromPath(join(app.getAppPath(), 'resources/icons', isPlaying ? 'pause.png' : 'play.png')),
+      icon: nativeImage.createFromPath(
+        join(app.getAppPath(), 'resources/icons', isPlaying ? 'pause.png' : 'play.png')
+      ),
       click() {
         window.webContents.send('global-shortcut', 'togglePlay');
-      },
+      }
     },
 
     {
       tooltip: 'next',
-      icon: nativeImage
-        .createFromPath(join(app.getAppPath(), 'resources/icons', 'next.png')),
+      icon: nativeImage.createFromPath(join(app.getAppPath(), 'resources/icons', 'next.png')),
       click() {
         window.webContents.send('global-shortcut', 'nextPlay');
-      },
+      }
     }
   ]);
 }
-
 
 /**
  * 初始化窗口管理相关的IPC监听
@@ -117,8 +133,13 @@ export function initializeWindowManager() {
   ipcMain.on('close-window', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-      win.destroy();
-      app.quit();
+      // 在 macOS 上，关闭窗口不应该退出应用，而是隐藏窗口
+      if (process.platform === 'darwin') {
+        win.hide();
+      } else {
+        win.destroy();
+        app.quit();
+      }
     }
   });
 
@@ -146,7 +167,11 @@ export function initializeWindowManager() {
       win.setMaximumSize(DEFAULT_MINI_WIDTH, DEFAULT_MINI_HEIGHT);
       win.setSize(DEFAULT_MINI_WIDTH, DEFAULT_MINI_HEIGHT, false); // 禁用动画
       // 将迷你窗口放在工作区的右上角，留出一些边距
-      win.setPosition(screenX + screenWidth - DEFAULT_MINI_WIDTH - 20, display.workArea.y + 20, false);
+      win.setPosition(
+        screenX + screenWidth - DEFAULT_MINI_WIDTH - 20,
+        display.workArea.y + 20,
+        false
+      );
       win.setAlwaysOnTop(true);
       win.setSkipTaskbar(false);
       win.setResizable(false);
@@ -173,7 +198,10 @@ export function initializeWindowManager() {
       console.log('从迷你模式恢复，使用保存的状态:', JSON.stringify(preMiniModeState));
 
       // 设置适当的最小尺寸
-      win.setMinimumSize(Math.max(DEFAULT_MAIN_WIDTH * 0.5, 600), Math.max(DEFAULT_MAIN_HEIGHT * 0.5, 400));
+      win.setMinimumSize(
+        Math.max(DEFAULT_MAIN_WIDTH * 0.5, 600),
+        Math.max(DEFAULT_MAIN_HEIGHT * 0.5, 400)
+      );
 
       // 恢复窗口状态
       win.setAlwaysOnTop(false);
@@ -210,9 +238,13 @@ export function initializeWindowManager() {
           if (!win.isDestroyed() && !win.isMaximized() && !win.isMinimized()) {
             // 再次验证窗口大小
             const [width, height] = win.getSize();
-            if (Math.abs(width - preMiniModeState.width) > 2 ||
-              Math.abs(height - preMiniModeState.height) > 2) {
-              console.log(`恢复后窗口大小不一致，再次调整: 当前=${width}x${height}, 目标=${preMiniModeState.width}x${preMiniModeState.height}`);
+            if (
+              Math.abs(width - preMiniModeState.width) > 2 ||
+              Math.abs(height - preMiniModeState.height) > 2
+            ) {
+              console.log(
+                `恢复后窗口大小不一致，再次调整: 当前=${width}x${height}, 目标=${preMiniModeState.width}x${preMiniModeState.height}`
+              );
               win.setSize(preMiniModeState.width, preMiniModeState.height, false);
             }
           }
@@ -220,7 +252,6 @@ export function initializeWindowManager() {
       }, 50);
     }
   });
-
 
   ipcMain.on('update-play-state', (_, playing: boolean) => {
     isPlaying = playing;
@@ -267,14 +298,16 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
     backgroundThrottling: false
   };
 
-  console.log(`创建窗口，使用选项: ${JSON.stringify({
-    width: options.width,
-    height: options.height,
-    x: options.x,
-    y: options.y,
-    minWidth: options.minWidth,
-    minHeight: options.minHeight
-  })}`);
+  console.log(
+    `创建窗口，使用选项: ${JSON.stringify({
+      width: options.width,
+      height: options.height,
+      x: options.x,
+      y: options.y,
+      minWidth: options.minWidth,
+      minHeight: options.minHeight
+    })}`
+  );
 
   // 创建窗口
   const mainWindow = new BrowserWindow(options);
@@ -293,6 +326,20 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
 
   mainWindow.on('show', () => {
     setThumbarButtons(mainWindow);
+  });
+
+  // 处理窗口关闭事件
+  mainWindow.on('close', (event) => {
+    // 在 macOS 上，阻止默认的关闭行为，改为隐藏窗口
+    if (process.platform === 'darwin') {
+      // 检查是否是应用正在退出
+      if (!isAppQuitting) {
+        event.preventDefault();
+        mainWindow.hide();
+        return;
+      }
+    }
+    // 在其他平台上，或者应用正在退出时，允许正常关闭
   });
 
   mainWindow.on('ready-to-show', () => {
@@ -314,9 +361,13 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
       if (!mainWindow.isDestroyed() && !mainWindow.isMaximized()) {
         const [currentWidth, currentHeight] = mainWindow.getSize();
         if (savedState && !savedState.isMaximized) {
-          if (Math.abs(currentWidth - savedState.width) > 2 ||
-            Math.abs(currentHeight - savedState.height) > 2) {
-            console.log(`窗口大小不匹配，再次调整: 当前=${currentWidth}x${currentHeight}, 目标=${savedState.width}x${savedState.height}`);
+          if (
+            Math.abs(currentWidth - savedState.width) > 2 ||
+            Math.abs(currentHeight - savedState.height) > 2
+          ) {
+            console.log(
+              `窗口大小不匹配，再次调整: 当前=${currentWidth}x${currentHeight}, 目标=${savedState.width}x${savedState.height}`
+            );
             mainWindow.setSize(savedState.width, savedState.height, false);
           }
         }
@@ -344,7 +395,6 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
   }
 
   initWindowSizeHandlers(mainWindow);
-
 
   // 保存主窗口引用
   mainWindowInstance = mainWindow;
