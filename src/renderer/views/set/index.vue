@@ -108,6 +108,34 @@
               </div>
             </div>
 
+            <!-- Token管理 -->
+            <div class="set-item">
+              <div>
+                <div class="set-item-title">{{ t('settings.basic.tokenManagement') }}</div>
+                <div class="set-item-content">
+                  <div class="text-sm text-gray-500 mb-2">
+                    {{ t('settings.basic.tokenStatus') }}:
+                    {{
+                      currentToken ? t('settings.basic.tokenSet') : t('settings.basic.tokenNotSet')
+                    }}
+                  </div>
+                  <div v-if="currentToken" class="text-xs text-gray-400 mb-2 font-mono break-all">
+                    {{ currentToken.substring(0, 50) }}...
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <n-button size="small" @click="showTokenModal = true">
+                  {{
+                    currentToken ? t('settings.basic.modifyToken') : t('settings.basic.setToken')
+                  }}
+                </n-button>
+                <n-button v-if="currentToken" size="small" type="error" @click="clearToken">
+                  {{ t('settings.basic.clearToken') }}
+                </n-button>
+              </div>
+            </div>
+
             <div class="set-item">
               <div>
                 <div class="set-item-title">{{ t('settings.basic.animation') }}</div>
@@ -524,6 +552,13 @@
       <remote-control-setting v-model:visible="showRemoteControlModal" />
     </template>
 
+    <!-- Cookie设置弹窗 -->
+    <cookie-settings-modal
+      v-model:show="showTokenModal"
+      :initial-value="currentToken"
+      @save="handleTokenSave"
+    />
+
     <!-- 清除缓存弹窗 -->
     <clear-cache-settings v-model:show="showClearCacheModal" @confirm="clearCache" />
   </div>
@@ -536,11 +571,13 @@ import { computed, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import localData from '@/../main/set.json';
+import { getUserDetail } from '@/api/login';
 import Coffee from '@/components/Coffee.vue';
 import DonationList from '@/components/common/DonationList.vue';
 import PlayBottom from '@/components/common/PlayBottom.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import ClearCacheSettings from '@/components/settings/ClearCacheSettings.vue';
+import CookieSettingsModal from '@/components/settings/CookieSettingsModal.vue';
 import MusicSourceSettings from '@/components/settings/MusicSourceSettings.vue';
 import ProxySettings from '@/components/settings/ProxySettings.vue';
 import RemoteControlSetting from '@/components/settings/ServerSetting.vue';
@@ -991,6 +1028,76 @@ const showMusicSourcesModal = ref(false);
 
 // 远程控制设置弹窗
 const showRemoteControlModal = ref(false);
+
+// Token管理相关
+const showTokenModal = ref(false);
+const currentToken = ref(localStorage.getItem('token') || '');
+
+// 处理Token保存
+const handleTokenSave = async (token: string) => {
+  try {
+    // 临时保存原有token
+    const originalToken = localStorage.getItem('token');
+
+    // 设置新token
+    localStorage.setItem('token', token);
+
+    // 验证token有效性
+    const user = await getUserDetail();
+    if (user.data && user.data.profile) {
+      // token有效，更新用户信息
+      userStore.setUser(user.data.profile);
+      currentToken.value = token;
+      message.success(t('settings.cookie.message.saveSuccess'));
+
+      // 刷新当前页面
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      // token无效，恢复原有token
+      if (originalToken) {
+        localStorage.setItem('token', originalToken);
+      } else {
+        localStorage.removeItem('token');
+      }
+      message.error(t('settings.cookie.message.saveError'));
+    }
+  } catch (error) {
+    // token无效，恢复原有token
+    const originalToken = localStorage.getItem('token');
+    if (originalToken) {
+      localStorage.setItem('token', originalToken);
+    } else {
+      localStorage.removeItem('token');
+    }
+    message.error(t('settings.cookie.message.saveError'));
+    console.error('Token验证失败:', error);
+  }
+};
+
+// 清除Token
+const clearToken = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  currentToken.value = '';
+  userStore.user = null;
+  message.success(t('settings.basic.clearToken') + '成功');
+
+  // 刷新页面
+  setTimeout(() => {
+    window.location.reload();
+  }, 1000);
+};
+
+// 监听localStorage中token的变化
+watch(
+  () => localStorage.getItem('token'),
+  (newToken) => {
+    currentToken.value = newToken || '';
+  },
+  { immediate: true }
+);
 </script>
 
 <style lang="scss" scoped>
