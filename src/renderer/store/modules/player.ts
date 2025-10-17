@@ -9,10 +9,12 @@ import { getBilibiliAudioUrl } from '@/api/bilibili';
 import { getLikedList, getMusicLrc, getMusicUrl, getParsingMusicUrl, likeSong } from '@/api/music';
 import { useMusicHistory } from '@/hooks/MusicHistoryHook';
 import { audioService } from '@/services/audioService';
-import type { ILyric, ILyricText, SongResult } from '@/types/music';
+import type { ILyric, ILyricText, IWordData, SongResult } from '@/types/music';
 import { type Platform } from '@/types/music';
 import { getImgUrl } from '@/utils';
+import { hasPermission } from '@/utils/auth';
 import { getImageLinearBackground } from '@/utils/linearColor';
+import { parseLyrics as parseYrcLyrics } from '@/utils/yrcParser';
 
 import { useSettingsStore } from './settings';
 import { useUserStore } from './user';
@@ -82,6 +84,10 @@ export const getSongUrl = async (
   songData: SongResult,
   isDownloaded: boolean = false
 ) => {
+  const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+  const settingsStore = useSettingsStore();
+  const { message } = createDiscreteApi(['message']); // 引入 message API 用于提示
+
   try {
     if (songData.playMusicUrl) {
       return songData.playMusicUrl;
@@ -104,14 +110,58 @@ export const getSongUrl = async (
       return songData.playMusicUrl || '';
     }
 
-    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    // ==================== 自定义API最优先 ====================
+    // 检查用户是否在全局设置中启用了 'custom' 音源
+    const globalSources = settingsStore.setData.enabledMusicSources || [];
+    const useCustomApiGlobally = globalSources.includes('custom');
 
-    // 检查是否有自定义音源设置
+    // 检查歌曲是否有专属的 'custom' 音源设置
     const songId = String(id);
-    const savedSource = localStorage.getItem(`song_source_${songId}`);
+    const savedSourceStr = localStorage.getItem(`song_source_${songId}`);
+    let useCustomApiForSong = false;
+    if (savedSourceStr) {
+      try {
+        const songSources = JSON.parse(savedSourceStr);
+        useCustomApiForSong = songSources.includes('custom');
+      } catch (e) {
+        console.error('解析歌曲音源设置失败:', e);
+      }
+    }
 
+    // 如果全局或歌曲专属设置中启用了自定义API，则最优先尝试
+    if ((useCustomApiGlobally || useCustomApiForSong) && settingsStore.setData.customApiPlugin) {
+      console.log(`优先级 1: 尝试使用自定义API解析歌曲 ${id}...`);
+      try {
+        // 直接从 api 目录导入 parseFromCustomApi 函数
+        const { parseFromCustomApi } = await import('@/api/parseFromCustomApi');
+        const customResult = await parseFromCustomApi(
+          numericId,
+          cloneDeep(songData),
+          settingsStore.setData.musicQuality || 'higher'
+        );
+
+        if (
+          customResult &&
+          customResult.data &&
+          customResult.data.data &&
+          customResult.data.data.url
+        ) {
+          console.log('自定义API解析成功！');
+          if (isDownloaded) return customResult.data.data as any;
+          return customResult.data.data.url;
+        } else {
+          // 自定义API失败，给出提示，然后继续走默认流程
+          console.log('自定义API解析失败，将使用默认降级流程...');
+          message.warning(i18n.global.t('player.reparse.customApiFailed')); // 给用户一个提示
+        }
+      } catch (error) {
+        console.error('调用自定义API时发生错误:', error);
+        message.error(i18n.global.t('player.reparse.customApiError'));
+      }
+    }
+    // 如果自定义API失败或未启用，则执行【原有】的解析流程
     // 如果有自定义音源设置，直接使用getParsingMusicUrl获取URL
-    if (savedSource && songData.source !== 'bilibili') {
+    if (savedSourceStr && songData.source !== 'bilibili') {
       try {
         console.log(`使用自定义音源解析歌曲 ID: ${songId}`);
         const res = await getParsingMusicUrl(numericId, cloneDeep(songData));
@@ -129,55 +179,79 @@ export const getSongUrl = async (
 
     // 正常获取URL流程
     const { data } = await getMusicUrl(numericId, isDownloaded);
-    let url = '';
-    let songDetail = null;
-    try {
-      if (data.data[0].freeTrialInfo || !data.data[0].url) {
+    if (data && data.data && data.data[0]) {
+      const songDetail = data.data[0];
+      const hasNoUrl = !songDetail.url;
+      const isTrial = !!songDetail.freeTrialInfo;
+
+      if (hasNoUrl || isTrial) {
+        console.log(`官方URL无效 (无URL: ${hasNoUrl}, 试听: ${isTrial})，进入内置备用解析...`);
         const res = await getParsingMusicUrl(numericId, cloneDeep(songData));
-        url = res.data.data.url;
-        songDetail = res.data.data;
-      } else {
-        songDetail = data.data[0] as any;
+        if (isDownloaded) return res?.data?.data as any;
+        return res?.data?.data?.url || null;
       }
-    } catch (error) {
-      console.error('error', error);
-      url = data.data[0].url || '';
+
+      console.log('官方API解析成功！');
+      if (isDownloaded) return songDetail as any;
+      return songDetail.url;
     }
-    if (isDownloaded) {
-      return songDetail;
-    }
-    url = url || data.data[0].url;
-    return url;
+
+    console.log('官方API返回数据结构异常，进入内置备用解析...');
+    const res = await getParsingMusicUrl(numericId, cloneDeep(songData));
+    if (isDownloaded) return res?.data?.data as any;
+    return res?.data?.data?.url || null;
   } catch (error) {
-    console.error('error', error);
-    return null;
+    console.error('官方API请求失败，进入内置备用解析流程:', error);
+    const res = await getParsingMusicUrl(numericId, cloneDeep(songData));
+    if (isDownloaded) return res?.data?.data as any;
+    return res?.data?.data?.url || null;
   }
 };
 
-const parseTime = (timeString: string): number => {
-  const [minutes, seconds] = timeString.split(':');
-  return Number(minutes) * 60 + Number(seconds);
-};
-
-const parseLyricLine = (lyricLine: string): { time: number; text: string } => {
-  const TIME_REGEX = /(\d{2}:\d{2}(\.\d*)?)/g;
-  const LRC_REGEX = /(\[(\d{2}):(\d{2})(\.(\d*))?\])/g;
-  const timeText = lyricLine.match(TIME_REGEX)?.[0] || '';
-  const time = parseTime(timeText);
-  const text = lyricLine.replace(LRC_REGEX, '').trim();
-  return { time, text };
-};
-
+/**
+ * 使用新的yrcParser解析歌词
+ * @param lyricsString 歌词字符串
+ * @returns 解析后的歌词数据
+ */
 const parseLyrics = (lyricsString: string): { lyrics: ILyricText[]; times: number[] } => {
-  const lines = lyricsString.split('\n');
-  const lyrics: ILyricText[] = [];
-  const times: number[] = [];
-  lines.forEach((line) => {
-    const { time, text } = parseLyricLine(line);
-    times.push(time);
-    lyrics.push({ text, trText: '' });
-  });
-  return { lyrics, times };
+  if (!lyricsString || typeof lyricsString !== 'string') {
+    return { lyrics: [], times: [] };
+  }
+
+  try {
+    const parseResult = parseYrcLyrics(lyricsString);
+
+    if (!parseResult.success) {
+      console.error('歌词解析失败:', parseResult.error.message);
+      return { lyrics: [], times: [] };
+    }
+
+    const { lyrics: parsedLyrics } = parseResult.data;
+    const lyrics: ILyricText[] = [];
+    const times: number[] = [];
+
+    for (const line of parsedLyrics) {
+      // 检查是否有逐字歌词
+      const hasWords = line.words && line.words.length > 0;
+
+      lyrics.push({
+        text: line.fullText,
+        trText: '', // 翻译文本稍后处理
+        words: hasWords ? (line.words as IWordData[]) : undefined,
+        hasWordByWord: hasWords,
+        startTime: line.startTime,
+        duration: line.duration
+      });
+
+      // 时间数组使用秒为单位（与原有逻辑保持一致）
+      times.push(line.startTime / 1000);
+    }
+
+    return { lyrics, times };
+  } catch (error) {
+    console.error('解析歌词时发生错误:', error);
+    return { lyrics: [], times: [] };
+  }
 };
 
 export const loadLrc = async (id: string | number): Promise<ILyric> => {
@@ -185,35 +259,90 @@ export const loadLrc = async (id: string | number): Promise<ILyric> => {
     console.log('B站音频，无需加载歌词');
     return {
       lrcTimeArray: [],
-      lrcArray: []
+      lrcArray: [],
+      hasWordByWord: false
     };
   }
 
   try {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
     const { data } = await getMusicLrc(numericId);
-    const { lyrics, times } = parseLyrics(data.lrc.lyric);
-    const tlyric: Record<string, string> = {};
+    const { lyrics, times } = parseLyrics(data?.yrc?.lyric || data?.lrc?.lyric);
+
+    // 检查是否有逐字歌词
+    let hasWordByWord = false;
+    for (const lyric of lyrics) {
+      if (lyric.hasWordByWord) {
+        hasWordByWord = true;
+        break;
+      }
+    }
 
     if (data.tlyric && data.tlyric.lyric) {
-      const { lyrics: tLyrics, times: tTimes } = parseLyrics(data.tlyric.lyric);
-      tLyrics.forEach((lyric, index) => {
-        tlyric[tTimes[index].toString()] = lyric.text;
+      const { lyrics: tLyrics } = parseLyrics(data.tlyric.lyric);
+
+      // 按索引顺序一一对应翻译歌词
+      // 如果翻译歌词数量与原歌词数量相同，直接按索引匹配
+      // 否则尝试通过时间戳匹配
+      if (tLyrics.length === lyrics.length) {
+        // 数量相同，直接按索引对应
+        lyrics.forEach((item, index) => {
+          item.trText = item.text && tLyrics[index] ? tLyrics[index].text : '';
+        });
+      } else {
+        // 数量不同，构建时间戳映射并尝试匹配
+        const tLyricMap = new Map<number, string>();
+        tLyrics.forEach((lyric) => {
+          if (lyric.text && lyric.startTime !== undefined) {
+            // 使用 startTime（毫秒）转换为秒作为键
+            const timeInSeconds = lyric.startTime / 1000;
+            tLyricMap.set(timeInSeconds, lyric.text);
+          }
+        });
+
+        // 为每句歌词查找最接近的翻译
+        lyrics.forEach((item, index) => {
+          if (!item.text) {
+            item.trText = '';
+            return;
+          }
+
+          const currentTime = times[index];
+          let closestTime = -1;
+          let minDiff = 2.0; // 最大允许差异2秒
+
+          // 查找最接近的时间戳
+          for (const [tTime] of tLyricMap.entries()) {
+            const diff = Math.abs(tTime - currentTime);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closestTime = tTime;
+            }
+          }
+
+          item.trText = closestTime !== -1 ? tLyricMap.get(closestTime) || '' : '';
+        });
+      }
+    } else {
+      // 没有翻译歌词，清空 trText
+      lyrics.forEach((item) => {
+        item.trText = '';
       });
     }
 
-    lyrics.forEach((item, index) => {
-      item.trText = item.text ? tlyric[times[index].toString()] || '' : '';
-    });
+    console.log('lyrics', lyrics);
+
     return {
       lrcTimeArray: times,
-      lrcArray: lyrics
+      lrcArray: lyrics,
+      hasWordByWord
     };
   } catch (err) {
     console.error('Error loading lyrics:', err);
     return {
       lrcTimeArray: [],
-      lrcArray: []
+      lrcArray: [],
+      hasWordByWord: false
     };
   }
 };
@@ -222,7 +351,6 @@ const getSongDetail = async (playMusic: SongResult) => {
   // playMusic.playLoading 在 handlePlayMusic 中已设置，这里不再设置
 
   if (playMusic.source === 'bilibili') {
-    console.log('处理B站音频详情');
     try {
       // 如果需要获取URL
       if (!playMusic.playMusicUrl && playMusic.bilibiliData) {
@@ -360,14 +488,6 @@ const fetchSongs = async (playList: SongResult[], startIndex: number, endIndex: 
   }
 };
 
-const loadLrcAsync = async (playMusic: SongResult) => {
-  if (playMusic.lyric && playMusic.lyric.lrcTimeArray.length > 0) {
-    return;
-  }
-  const lyrics = await loadLrc(playMusic.id);
-  playMusic.lyric = lyrics;
-};
-
 // 定时关闭类型
 export enum SleepTimerType {
   NONE = 'none', // 没有定时
@@ -414,6 +534,117 @@ export const usePlayerStore = defineStore('player', () => {
   // 音量状态管理
   const volume = ref(parseFloat(getLocalStorageItem('volume', '1')));
 
+  // 原始播放列表 - 保存切换到随机模式前的顺序
+  const originalPlayList = ref<SongResult[]>(getLocalStorageItem('originalPlayList', []));
+
+  // 通用洗牌函数 - Fisher-Yates 算法
+  const performShuffle = (list: SongResult[], currentSong?: SongResult): SongResult[] => {
+    if (list.length <= 1) return [...list];
+
+    const result: SongResult[] = [];
+    const remainingSongs = [...list];
+
+    // 如果指定了当前歌曲，先把它放在第一位
+    if (currentSong && currentSong.id) {
+      const currentSongIndex = remainingSongs.findIndex((song) => song.id === currentSong.id);
+      if (currentSongIndex !== -1) {
+        // 把当前歌曲放在第一位
+        result.push(remainingSongs.splice(currentSongIndex, 1)[0]);
+      }
+    }
+
+    // 对剩余歌曲进行洗牌
+    if (remainingSongs.length > 0) {
+      // Fisher-Yates 洗牌算法
+      for (let i = remainingSongs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remainingSongs[i], remainingSongs[j]] = [remainingSongs[j], remainingSongs[i]];
+      }
+
+      // 把洗牌后的歌曲添加到结果中
+      result.push(...remainingSongs);
+    }
+
+    return result;
+  };
+
+  // 应用随机播放到当前播放列表
+  const shufflePlayList = () => {
+    if (playList.value.length <= 1) return;
+
+    // 保存原始播放列表（如果还没保存）
+    if (originalPlayList.value.length === 0) {
+      originalPlayList.value = [...playList.value];
+      localStorage.setItem('originalPlayList', JSON.stringify(originalPlayList.value));
+    }
+
+    const currentSong = playList.value[playListIndex.value];
+    const shuffledList = performShuffle(playList.value, currentSong);
+
+    // 更新播放列表和索引
+    playList.value = shuffledList;
+    playListIndex.value = 0;
+    localStorage.setItem('playList', JSON.stringify(shuffledList));
+    localStorage.setItem('playListIndex', '0');
+  };
+
+  // 恢复原始播放列表顺序
+  const restoreOriginalOrder = () => {
+    if (originalPlayList.value.length === 0) return;
+
+    const currentSong = playMusic.value;
+    const originalIndex = originalPlayList.value.findIndex((song) => song.id === currentSong.id);
+
+    playList.value = [...originalPlayList.value];
+    playListIndex.value = Math.max(0, originalIndex);
+
+    localStorage.setItem('playList', JSON.stringify(playList.value));
+    localStorage.setItem('playListIndex', playListIndex.value.toString());
+
+    // 清空原始播放列表
+    originalPlayList.value = [];
+    localStorage.removeItem('originalPlayList');
+  };
+
+  // 智能预加载下一首歌曲
+  const preloadNextSongs = (currentIndex: number) => {
+    if (playList.value.length <= 1) return;
+
+    // 计算下一首歌曲的索引
+    let nextIndex: number;
+
+    if (playMode.value === 0) {
+      // 顺序播放模式：下一首，如果是最后一首则不预加载
+      if (currentIndex >= playList.value.length - 1) {
+        return; // 顺序播放模式下最后一首不预加载
+      }
+      nextIndex = currentIndex + 1;
+    } else {
+      // 循环播放模式和随机播放模式：都是循环的
+      nextIndex = (currentIndex + 1) % playList.value.length;
+    }
+
+    // 预加载下一首和下下首
+    const endIndex = Math.min(nextIndex + 2, playList.value.length);
+
+    // 如果需要循环到开头，分两次预加载
+    if (nextIndex < playList.value.length) {
+      fetchSongs(playList.value, nextIndex, endIndex);
+
+      // 如果是循环模式且接近列表末尾，也预加载列表开头的歌曲
+      if (
+        (playMode.value === 1 || playMode.value === 2) &&
+        nextIndex + 1 >= playList.value.length &&
+        playList.value.length > 2
+      ) {
+        // 预加载列表开头的第一首
+        setTimeout(() => {
+          fetchSongs(playList.value, 0, 1);
+        }, 1000);
+      }
+    }
+  };
+
   // 清空播放列表
   const clearPlayAll = async () => {
     audioService.pause();
@@ -422,10 +653,12 @@ export const usePlayerStore = defineStore('player', () => {
       playMusicUrl.value = '';
       playList.value = [];
       playListIndex.value = 0;
+      originalPlayList.value = [];
       localStorage.removeItem('currentPlayMusic');
       localStorage.removeItem('currentPlayMusicUrl');
       localStorage.removeItem('playList');
       localStorage.removeItem('playListIndex');
+      localStorage.removeItem('originalPlayList');
     }, 500);
   };
 
@@ -466,18 +699,35 @@ export const usePlayerStore = defineStore('player', () => {
       currentSound.stop();
       currentSound.unload();
     }
-    // 先切换歌曲数据，更新播放状态
-    // 加载歌词
-    await loadLrcAsync(music);
+
+    // 保存原始歌曲数据
     const originalMusic = { ...music };
-    // 获取背景色
-    const { backgroundColor, primaryColor } =
-      music.backgroundColor && music.primaryColor
-        ? music
-        : await getImageLinearBackground(getImgUrl(music?.picUrl, '30y30'));
+
+    // 并行加载歌词和背景色，提高加载速度
+    const [lyrics, { backgroundColor, primaryColor }] = await Promise.all([
+      // 加载歌词
+      (async () => {
+        if (music.lyric && music.lyric.lrcTimeArray.length > 0) {
+          return music.lyric;
+        }
+        return await loadLrc(music.id);
+      })(),
+      // 获取背景色
+      (async () => {
+        if (music.backgroundColor && music.primaryColor) {
+          return { backgroundColor: music.backgroundColor, primaryColor: music.primaryColor };
+        }
+        return await getImageLinearBackground(getImgUrl(music?.picUrl, '30y30'));
+      })()
+    ]);
+
+    // 设置歌词和背景色
+    music.lyric = lyrics;
     music.backgroundColor = backgroundColor;
     music.primaryColor = primaryColor;
     music.playLoading = true; // 设置加载状态
+
+    // 更新 playMusic，此时歌词已完全加载
     playMusic.value = music;
 
     // 更新播放相关状态
@@ -512,6 +762,10 @@ export const usePlayerStore = defineStore('player', () => {
 
       // 获取歌曲详情，包括URL
       const updatedPlayMusic = await getSongDetail(originalMusic);
+
+      // 保留已加载的歌词数据，不要被 getSongDetail 的返回值覆盖
+      updatedPlayMusic.lyric = lyrics;
+
       playMusic.value = updatedPlayMusic;
       playMusicUrl.value = updatedPlayMusic.playMusicUrl as string;
       music.playMusicUrl = updatedPlayMusic.playMusicUrl as string;
@@ -521,10 +775,11 @@ export const usePlayerStore = defineStore('player', () => {
       localStorage.setItem('currentPlayMusicUrl', playMusicUrl.value);
       localStorage.setItem('isPlaying', play.value.toString());
 
-      // 无论如何都预加载更多歌曲
+      // 预加载下一首歌曲
       if (songIndex !== -1) {
         setTimeout(() => {
-          fetchSongs(playList.value, songIndex + 1, songIndex + 2);
+          // 使用最新的 playListIndex 而不是 songIndex，确保预加载索引正确
+          preloadNextSongs(playListIndex.value);
         }, 3000);
       } else {
         console.warn('当前歌曲未在播放列表中找到');
@@ -706,12 +961,58 @@ export const usePlayerStore = defineStore('player', () => {
   };
 
   const setPlayList = (list: SongResult[], keepIndex: boolean = false) => {
-    // 如果指定保持当前索引，则不重新计算索引
-    if (!keepIndex) {
-      playListIndex.value = list.findIndex((item) => item.id === playMusic.value.id);
+    if (list.length === 0) {
+      playList.value = [];
+      playListIndex.value = 0;
+      originalPlayList.value = [];
+      localStorage.setItem('playList', JSON.stringify([]));
+      localStorage.setItem('playListIndex', '0');
+      localStorage.removeItem('originalPlayList');
+      return;
     }
-    playList.value = list;
-    localStorage.setItem('playList', JSON.stringify(list));
+
+    // 根据当前播放模式处理新的播放列表
+    if (playMode.value === 2) {
+      // 随机模式：保存原始顺序并洗牌
+      console.log('随机模式下设置新播放列表，保存原始顺序并洗牌');
+
+      // 保存原始播放列表
+      originalPlayList.value = [...list];
+      localStorage.setItem('originalPlayList', JSON.stringify(originalPlayList.value));
+
+      // 洗牌新列表，优先保持当前歌曲在第一位
+      const currentSong = playMusic.value;
+      const shuffledList = performShuffle(list, currentSong);
+
+      // 计算新的播放索引
+      if (currentSong && currentSong.id) {
+        const currentSongIndex = shuffledList.findIndex((song) => song.id === currentSong.id);
+        playListIndex.value = currentSongIndex !== -1 ? 0 : keepIndex ? playListIndex.value : 0;
+      } else {
+        playListIndex.value = keepIndex ? playListIndex.value : 0;
+      }
+
+      playList.value = shuffledList;
+    } else {
+      // 顺序模式和循环模式：直接设置播放列表
+      console.log('顺序/循环模式下设置新播放列表');
+
+      // 清除原始播放列表状态（如果有的话）
+      if (originalPlayList.value.length > 0) {
+        originalPlayList.value = [];
+        localStorage.removeItem('originalPlayList');
+      }
+
+      // 计算播放索引
+      if (!keepIndex) {
+        playListIndex.value = list.findIndex((item) => item.id === playMusic.value.id);
+      }
+
+      playList.value = list;
+    }
+
+    // 保存到 localStorage
+    localStorage.setItem('playList', JSON.stringify(playList.value));
     localStorage.setItem('playListIndex', playListIndex.value.toString());
   };
 
@@ -719,13 +1020,22 @@ export const usePlayerStore = defineStore('player', () => {
     const list = [...playList.value];
     const currentIndex = playListIndex.value;
 
+    // 如果歌曲已在播放列表中，先移除它
     const existingIndex = list.findIndex((item) => item.id === song.id);
     if (existingIndex !== -1) {
       list.splice(existingIndex, 1);
+      // 如果移除的歌曲在当前歌曲之前，需要调整当前索引
+      if (existingIndex <= currentIndex) {
+        playListIndex.value = Math.max(0, playListIndex.value - 1);
+      }
     }
 
-    list.splice(currentIndex + 1, 0, song);
-    setPlayList(list);
+    // 插入到当前播放歌曲的下一个位置
+    const insertIndex = playListIndex.value + 1;
+    list.splice(insertIndex, 0, song);
+
+    // 更新播放列表
+    setPlayList(list, true); // 保持当前索引不变
   };
 
   // 睡眠定时器功能
@@ -919,103 +1229,25 @@ export const usePlayerStore = defineStore('player', () => {
 
       // 保存当前索引，用于错误恢复
       const currentIndex = playListIndex.value;
-      let nowPlayListIndex: number;
 
-      if (playMode.value === 2) {
-        // 随机播放模式
-        do {
-          nowPlayListIndex = Math.floor(Math.random() * playList.value.length);
-        } while (nowPlayListIndex === playListIndex.value && playList.value.length > 1);
-      } else {
-        // 顺序播放或循环播放模式
-        nowPlayListIndex = (playListIndex.value + 1) % playList.value.length;
-      }
+      // 计算下一首歌曲的索引（所有播放模式都使用顺序播放，因为随机模式下列表已经是随机的）
+      const nowPlayListIndex = (playListIndex.value + 1) % playList.value.length;
 
       // 获取下一首歌曲
-      let nextSong = { ...playList.value[nowPlayListIndex] };
+      const nextSong = { ...playList.value[nowPlayListIndex] };
 
-      // 记录尝试播放过的索引，防止无限循环
-      const attemptedIndices = new Set<number>();
-      attemptedIndices.add(nowPlayListIndex);
-
-      // 先更新当前播放索引
+      // 更新当前播放索引
       playListIndex.value = nowPlayListIndex;
 
       // 尝试播放
-      let success = false;
-      let retryCount = 0;
-      const maxRetries = Math.min(3, playList.value.length);
+      const success = await handlePlayMusic(nextSong, true);
 
-      // 尝试播放，最多尝试maxRetries次
-      while (!success && retryCount < maxRetries) {
-        success = await handlePlayMusic(nextSong, true);
-
-        if (!success) {
-          retryCount++;
-          console.error(`播放失败，尝试 ${retryCount}/${maxRetries}`);
-
-          if (retryCount >= maxRetries) {
-            console.error('多次尝试播放失败，将从播放列表中移除此歌曲');
-            // 从播放列表中移除失败的歌曲
-            const newPlayList = [...playList.value];
-            newPlayList.splice(nowPlayListIndex, 1);
-
-            if (newPlayList.length > 0) {
-              // 更新播放列表，但保持当前索引不变
-              const keepCurrentIndexPosition = true;
-              setPlayList(newPlayList, keepCurrentIndexPosition);
-
-              // 继续尝试下一首
-              if (playMode.value === 2) {
-                // 随机模式，随机选择一首未尝试过的
-                const availableIndices = Array.from(
-                  { length: newPlayList.length },
-                  (_, i) => i
-                ).filter((i) => !attemptedIndices.has(i));
-
-                if (availableIndices.length > 0) {
-                  // 随机选择一个未尝试过的索引
-                  nowPlayListIndex =
-                    availableIndices[Math.floor(Math.random() * availableIndices.length)];
-                } else {
-                  // 如果所有歌曲都尝试过了，选择下一个索引
-                  nowPlayListIndex = (playListIndex.value + 1) % newPlayList.length;
-                }
-              } else {
-                // 顺序播放，选择下一首
-                // 如果当前索引已经是最后一首，循环到第一首
-                nowPlayListIndex =
-                  playListIndex.value >= newPlayList.length ? 0 : playListIndex.value;
-              }
-
-              playListIndex.value = nowPlayListIndex;
-              attemptedIndices.add(nowPlayListIndex);
-
-              if (newPlayList[nowPlayListIndex]) {
-                nextSong = { ...newPlayList[nowPlayListIndex] };
-                retryCount = 0; // 重置重试计数器，为新歌曲准备
-              } else {
-                // 处理索引无效的情况
-                console.error('无效的播放索引，停止尝试');
-                break;
-              }
-            } else {
-              // 播放列表为空，停止尝试
-              console.error('播放列表为空，停止尝试');
-              break;
-            }
-          }
-        }
-      }
-
-      // 歌曲切换成功，触发歌曲变更处理（用于定时关闭功能）
       if (success) {
         handleSongChange();
       } else {
-        console.error('所有尝试都失败，无法播放下一首歌曲');
-        // 如果尝试了所有可能的歌曲仍然失败，恢复到原始索引
+        console.error('播放下一首失败');
         playListIndex.value = currentIndex;
-        setIsPlay(false); // 停止播放
+        setIsPlay(false);
         message.error(i18n.global.t('player.playFailed'));
       }
     } catch (error) {
@@ -1110,8 +1342,24 @@ export const usePlayerStore = defineStore('player', () => {
   const prevPlay = useThrottleFn(_prevPlay, 500);
 
   const togglePlayMode = () => {
-    playMode.value = (playMode.value + 1) % 3;
+    const newMode = (playMode.value + 1) % 3;
+    const wasRandom = playMode.value === 2;
+    const isRandom = newMode === 2;
+
+    playMode.value = newMode;
     localStorage.setItem('playMode', JSON.stringify(playMode.value));
+
+    // 当切换到随机模式时，直接洗牌播放列表
+    if (isRandom && !wasRandom && playList.value.length > 0) {
+      shufflePlayList();
+      console.log('切换到随机模式，洗牌播放列表');
+    }
+
+    // 当从随机模式切换出去时，恢复原始顺序
+    if (!isRandom && wasRandom) {
+      restoreOriginalOrder();
+      console.log('切换出随机模式，恢复原始顺序');
+    }
   };
 
   const addToFavorite = async (id: number | string) => {
@@ -1123,9 +1371,17 @@ export const usePlayerStore = defineStore('player', () => {
     );
 
     if (!isAlreadyInList) {
+      // 先添加到本地收藏列表
       favoriteList.value.push(id);
       localStorage.setItem('favoriteList', JSON.stringify(favoriteList.value));
-      typeof id === 'number' && useUserStore().user && likeSong(id, true);
+      // 只有在有真实登录权限时才调用API
+      if (typeof id === 'number' && useUserStore().user && hasPermission(true)) {
+        try {
+          await likeSong(id, true);
+        } catch (error) {
+          console.error('收藏歌曲API调用失败:', error);
+        }
+      }
     }
   };
 
@@ -1136,8 +1392,16 @@ export const usePlayerStore = defineStore('player', () => {
         (existingId) => !isBilibiliIdMatch(existingId, id)
       );
     } else {
+      // 先从本地收藏列表中移除
       favoriteList.value = favoriteList.value.filter((existingId) => existingId !== id);
-      useUserStore().user && likeSong(Number(id), false);
+      // 只有在有真实登录权限时才调用API
+      if (typeof id === 'number' && useUserStore().user && hasPermission(true)) {
+        try {
+          await likeSong(id, false);
+        } catch (error) {
+          console.error('取消收藏歌曲API调用失败:', error);
+        }
+      }
     }
     localStorage.setItem('favoriteList', JSON.stringify(favoriteList.value));
   };
@@ -1183,6 +1447,17 @@ export const usePlayerStore = defineStore('player', () => {
 
     if (savedPlayList.length > 0) {
       setPlayList(savedPlayList);
+
+      // 重启后恢复随机播放状态
+      if (playMode.value === 2) {
+        // 如果当前是随机模式但没有保存的原始播放列表，说明需要重新洗牌
+        if (originalPlayList.value.length === 0) {
+          console.log('重启后恢复随机播放模式，重新洗牌播放列表');
+          shufflePlayList();
+        } else {
+          console.log('重启后恢复随机播放模式，播放列表已是洗牌状态');
+        }
+      }
     }
 
     if (savedPlayMusic && Object.keys(savedPlayMusic).length > 0) {
@@ -1254,6 +1529,7 @@ export const usePlayerStore = defineStore('player', () => {
       // 保存当前播放状态
       const shouldPlay = play.value;
       console.log('播放音频，当前播放状态:', shouldPlay ? '播放' : '暂停');
+      console.log('playMusic.value', playMusic.value.name, playMusic.value.id);
 
       // 检查是否有保存的进度
       let initialPosition = 0;
@@ -1530,6 +1806,12 @@ export const usePlayerStore = defineStore('player', () => {
     setVolume,
     getVolume,
     increaseVolume,
-    decreaseVolume
+    decreaseVolume,
+
+    // 原始播放列表和洗牌相关
+    originalPlayList,
+    shufflePlayList,
+    restoreOriginalOrder,
+    preloadNextSongs
   };
 });

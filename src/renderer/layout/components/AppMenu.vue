@@ -1,15 +1,19 @@
 <template>
   <div>
     <!-- menu -->
-    <div class="app-menu" :class="{ 'app-menu-expanded': isText }">
+    <div class="app-menu" :class="{ 'app-menu-expanded': settingsStore.setData.isMenuExpanded }">
       <div class="app-menu-header">
-        <div class="app-menu-logo" @click="isText = !isText">
+        <div class="app-menu-logo" @click="toggleMenu">
           <img :src="icon" class="w-9 h-9" alt="logo" />
         </div>
       </div>
       <div class="app-menu-list">
         <div v-for="(item, index) in menus" :key="item.path" class="app-menu-item">
-          <n-tooltip :delay="200" :disabled="isText || isMobile" placement="bottom">
+          <n-tooltip
+            :delay="200"
+            :disabled="settingsStore.setData.isMenuExpanded || isMobile"
+            placement="bottom"
+          >
             <template #trigger>
               <router-link class="app-menu-item-link" :to="item.path">
                 <i
@@ -18,14 +22,14 @@
                   :class="item.meta.icon"
                 ></i>
                 <span
-                  v-if="isText"
+                  v-if="settingsStore.setData.isMenuExpanded"
                   class="app-menu-item-text ml-3"
                   :class="isChecked(index) ? 'text-green-500' : ''"
                   >{{ t(item.meta.title) }}</span
                 >
               </router-link>
             </template>
-            <div v-if="!isText">{{ t(item.meta.title) }}</div>
+            <div v-if="!settingsStore.setData.isMenuExpanded">{{ t(item.meta.title) }}</div>
           </n-tooltip>
         </div>
       </div>
@@ -39,6 +43,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 import icon from '@/assets/icon.png';
+import { useSettingsStore } from '@/store';
 import { isMobile } from '@/utils';
 
 const props = defineProps({
@@ -62,6 +67,7 @@ const props = defineProps({
 
 const route = useRoute();
 const path = ref(route.path);
+const settingsStore = useSettingsStore();
 watch(
   () => route.path,
   async (newParams) => {
@@ -83,7 +89,11 @@ const iconStyle = (index: number) => {
   return style;
 };
 
-const isText = ref(false);
+const toggleMenu = () => {
+  settingsStore.setSetData({
+    isMenuExpanded: !settingsStore.setData.isMenuExpanded
+  });
+};
 </script>
 
 <style lang="scss" scoped>
@@ -95,10 +105,11 @@ const isText = ref(false);
   max-height: calc(100vh - 120px); /* 为header预留空间，防止菜单项被遮挡 */
   overflow-y: auto;
   overflow-x: hidden;
-  /* 自定义滚动条样式 */
+  /* 自定义滚动条样式 - 默认隐藏，悬停时显示 */
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  scrollbar-color: transparent transparent;
   padding-bottom: 20px;
+  transition: scrollbar-color 0.3s ease;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -109,11 +120,21 @@ const isText = ref(false);
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(156, 163, 175, 0.5);
+    background-color: transparent;
     border-radius: 2px;
+    transition: background-color 0.3s ease;
+  }
 
-    &:hover {
-      background-color: rgba(156, 163, 175, 0.7);
+  /* 悬停时显示滚动条 */
+  &:hover {
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.5);
+
+      &:hover {
+        background-color: rgba(156, 163, 175, 0.7);
+      }
     }
   }
 }

@@ -29,7 +29,8 @@ export default {
     list: '自動で次の曲を再生'
   },
   lrc: {
-    noLrc: '歌詞がありません。お楽しみください'
+    noLrc: '歌詞がありません。お楽しみください',
+    noAutoScroll: '本歌詞は自動スクロールをサポートしていません'
   },
   reparse: {
     title: '解析音源を選択',
@@ -39,7 +40,9 @@ export default {
     warning: '音源を選択してください',
     bilibiliNotSupported: 'Bilibili動画は再解析をサポートしていません',
     processing: '解析中...',
-    clear: 'カスタム音源をクリア'
+    clear: 'カスタム音源をクリア',
+    customApiFailed: 'カスタムAPIの解析に失敗しました。内蔵音源を試しています...',
+    customApiError: 'カスタムAPIのリクエストでエラーが発生しました。内蔵音源を試しています...'
   },
   playBar: {
     expand: '歌詞を展開',
@@ -118,6 +121,7 @@ export default {
     cleared: 'プレイリストをクリアしました',
     empty: 'プレイリストが空です',
     clearConfirmTitle: 'プレイリストをクリア',
-    clearConfirmContent: 'これによりプレイリスト内のすべての楽曲がクリアされ、現在の再生が停止されます。続行しますか？'
+    clearConfirmContent:
+      'これによりプレイリスト内のすべての楽曲がクリアされ、現在の再生が停止されます。続行しますか？'
   }
 };

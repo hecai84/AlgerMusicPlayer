@@ -50,7 +50,14 @@ export default {
       englishText: 'The quick brown fox jumps over the lazy dog',
       japaneseText: 'あいうえお かきくけこ さしすせそ',
       koreanText: '가나다라마 바사아자차 카타파하'
-    }
+    },
+    gpuAcceleration: 'GPU加速',
+    gpuAccelerationDesc: '啟用或禁用硬體加速，可以提高渲染性能，但可能會增加GPU負載',
+    gpuAccelerationRestart: '更改GPU加速設定需要重啟應用後生效',
+    gpuAccelerationChangeSuccess: 'GPU加速設定已更新，重啟應用後生效',
+    gpuAccelerationChangeError: 'GPU加速設定更新失敗',
+    tabletMode: '平板模式',
+    tabletModeDesc: '啟用後將在移動設備上使用PC樣式界面，適合平板等大屏設備'
   },
   playback: {
     quality: '音質設定',
@@ -78,7 +85,31 @@ export default {
     autoPlay: '自動播放',
     autoPlayDesc: '重新開啟應用程式時是否自動繼續播放',
     showStatusBar: '是否顯示狀態列控制功能',
-    showStatusBarContent: '可以在您的mac狀態列顯示音樂控制功能(重啟後生效)'
+    showStatusBarContent: '可以在您的mac狀態列顯示音樂控制功能(重啟後生效)',
+    fallbackParser: '備用解析服務 (GD音樂台)',
+    fallbackParserDesc: '當勾選「GD音樂台」且常規音源無法播放時，將使用此服務嘗試解析。',
+    parserGD: 'GD 音樂台 (內建)',
+    parserCustom: '自訂 API',
+
+    // 音源標籤
+    sourceLabels: {
+      migu: '咪咕音樂',
+      kugou: '酷狗音樂',
+      pyncmd: '網易雲（內建）',
+      bilibili: 'Bilibili',
+      gdmusic: 'GD音樂台',
+      custom: '自訂 API'
+    },
+
+    customApi: {
+      sectionTitle: '自訂 API 設定',
+      importConfig: '匯入 JSON 設定',
+      currentSource: '目前音源',
+      notImported: '尚未匯入自訂音源。',
+      importSuccess: '成功匯入音源：{name}',
+      importFailed: '匯入失敗：{message}',
+      enableHint: '請先匯入 JSON 設定檔才能啟用'
+    }
   },
   application: {
     closeAction: '關閉行為',
@@ -230,6 +261,11 @@ export default {
       closeColorPicker: '關閉色板'
     },
     placeholder: '#1db954'
+  },
+  translationEngine: '歌詞翻譯引擎',
+  translationEngineOptions: {
+    none: '關閉',
+    opencc: 'OpenCC 繁化'
   },
   cookie: {
     title: 'Cookie設定',

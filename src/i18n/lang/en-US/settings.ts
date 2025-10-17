@@ -50,7 +50,17 @@ export default {
       englishText: 'The quick brown fox jumps over the lazy dog',
       japaneseText: 'あいうえお かきくけこ さしすせそ',
       koreanText: '가나다라마 바사아자차 카타파하'
-    }
+    },
+    gpuAcceleration: 'GPU Acceleration',
+    gpuAccelerationDesc:
+      'Enable or disable hardware acceleration, can improve rendering performance but may increase GPU load',
+    gpuAccelerationRestart:
+      'Changing GPU acceleration settings requires application restart to take effect',
+    gpuAccelerationChangeSuccess:
+      'GPU acceleration settings updated, restart application to take effect',
+    gpuAccelerationChangeError: 'Failed to update GPU acceleration settings',
+    tabletMode: 'Tablet Mode',
+    tabletModeDesc: 'Enabling tablet mode allows using PC-style interface on mobile devices'
   },
   playback: {
     quality: 'Audio Quality',
@@ -80,7 +90,32 @@ export default {
     autoPlayDesc: 'Auto resume playback when reopening the app',
     showStatusBar: 'Show Status Bar',
     showStatusBarContent:
-      'You can display the music control function in your mac status bar (effective after a restart)'
+      'You can display the music control function in your mac status bar (effective after a restart)',
+    fallbackParser: 'Fallback Parser (GD Music)',
+    fallbackParserDesc:
+      'When "GD Music" is checked and regular sources fail, this service will be used.',
+    parserGD: 'GD Music (Built-in)',
+    parserCustom: 'Custom API',
+
+    // Source labels
+    sourceLabels: {
+      migu: 'Migu',
+      kugou: 'Kugou',
+      pyncmd: 'NetEase (Built-in)',
+      bilibili: 'Bilibili',
+      gdmusic: 'GD Music',
+      custom: 'Custom API'
+    },
+
+    customApi: {
+      sectionTitle: 'Custom API Settings',
+      importConfig: 'Import JSON Config',
+      currentSource: 'Current Source',
+      notImported: 'No custom source imported yet.',
+      importSuccess: 'Successfully imported source: {name}',
+      importFailed: 'Import failed: {message}',
+      enableHint: 'Import a JSON config file to enable'
+    }
   },
   application: {
     closeAction: 'Close Action',
@@ -232,6 +267,11 @@ export default {
     },
     lyricLines: 'Lyric Lines',
     mobileUnavailable: 'This setting is only available on mobile devices'
+  },
+  translationEngine: 'Lyric Translation Engine',
+  translationEngineOptions: {
+    none: 'Off',
+    opencc: 'OpenCC Traditionalize'
   },
   themeColor: {
     title: 'Lyric Theme Color',

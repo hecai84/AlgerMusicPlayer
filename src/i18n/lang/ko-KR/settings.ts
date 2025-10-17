@@ -50,7 +50,17 @@ export default {
       englishText: 'The quick brown fox jumps over the lazy dog',
       japaneseText: 'あいうえお かきくけこ さしすせそ',
       koreanText: '가나다라마 바사아자차 카타파하'
-    }
+    },
+    gpuAcceleration: 'GPU 가속',
+    gpuAccelerationDesc:
+      'GPU 가속을 사용하면 애니메이션이 빠르게 재생되고 애니메이션이 느리게 재생되는 것보다 느릴 수 있습니다.',
+    gpuAccelerationRestart: 'GPU 가속 설정을 변경하면 애플리케이션을 다시 시작해야 합니다',
+    gpuAccelerationChangeSuccess:
+      'GPU 가속 설정이 업데이트되었습니다. 애플리케이션을 다시 시작하여 적용하십시오',
+    gpuAccelerationChangeError: 'GPU 가속 설정 업데이트에 실패했습니다',
+    tabletMode: '태블릿 모드',
+    tabletModeDesc:
+      '태블릿 모드를 사용하면 모바일 기기에서 PC 스타일의 인터페이스를 사용할 수 있습니다'
   },
   playback: {
     quality: '음질 설정',
@@ -78,7 +88,32 @@ export default {
     autoPlay: '자동 재생',
     autoPlayDesc: '앱을 다시 열 때 자동으로 재생을 계속할지 여부',
     showStatusBar: '상태바 제어 기능 표시 여부',
-    showStatusBarContent: 'Mac 상태바에 음악 제어 기능을 표시할 수 있습니다 (재시작 후 적용)'
+    showStatusBarContent: 'Mac 상태바에 음악 제어 기능을 표시할 수 있습니다 (재시작 후 적용)',
+    fallbackParser: '대체 분석 서비스 (GD Music)',
+    fallbackParserDesc:
+      '"GD Music"을 선택하고 일반 음원을 사용할 수 없을 때 이 서비스를 사용합니다.',
+    parserGD: 'GD Music (내장)',
+    parserCustom: '사용자 지정 API',
+
+    // 음원 라벨
+    sourceLabels: {
+      migu: 'Migu',
+      kugou: 'Kugou',
+      pyncmd: 'NetEase (내장)',
+      bilibili: 'Bilibili',
+      gdmusic: 'GD Music',
+      custom: '사용자 지정 API'
+    },
+
+    customApi: {
+      sectionTitle: '사용자 지정 API 설정',
+      importConfig: 'JSON 설정 가져오기',
+      currentSource: '현재 음원',
+      notImported: '아직 사용자 지정 음원을 가져오지 않았습니다.',
+      importSuccess: '음원 가져오기 성공: {name}',
+      importFailed: '가져오기 실패: {message}',
+      enableHint: '사용하려면 먼저 JSON 구성 파일을 가져오세요'
+    }
   },
   application: {
     closeAction: '닫기 동작',
@@ -93,7 +128,8 @@ export default {
     download: '다운로드 관리',
     downloadDesc: '다운로드 목록 버튼을 항상 표시할지 여부',
     unlimitedDownload: '무제한 다운로드',
-    unlimitedDownloadDesc: '활성화하면 음악을 무제한으로 다운로드합니다 (다운로드 실패가 발생할 수 있음), 기본 제한 300곡',
+    unlimitedDownloadDesc:
+      '활성화하면 음악을 무제한으로 다운로드합니다 (다운로드 실패가 발생할 수 있음), 기본 제한 300곡',
     downloadPath: '다운로드 디렉토리',
     downloadPathDesc: '음악 파일의 다운로드 위치 선택',
     remoteControl: '원격 제어',
@@ -109,7 +145,8 @@ export default {
     proxyPort: '프록시 포트',
     proxyPortPlaceholder: '프록시 포트를 입력하세요',
     realIP: 'realIP 설정',
-    realIPDesc: '제한으로 인해 이 프로젝트는 해외에서 사용할 때 제한을 받을 수 있으며, realIP 매개변수를 사용하여 국내 IP를 전달하여 해결할 수 있습니다',
+    realIPDesc:
+      '제한으로 인해 이 프로젝트는 해외에서 사용할 때 제한을 받을 수 있으며, realIP 매개변수를 사용하여 국내 IP를 전달하여 해결할 수 있습니다',
     messages: {
       proxySuccess: '프록시 설정이 저장되었습니다. 앱을 재시작한 후 적용됩니다',
       proxyError: '입력이 올바른지 확인하세요',
@@ -230,6 +267,11 @@ export default {
     },
     lyricLines: '가사 줄 수',
     mobileUnavailable: '이 설정은 모바일에서만 사용 가능합니다'
+  },
+  translationEngine: '가사 번역 엔진',
+  translationEngineOptions: {
+    none: '닫기',
+    opencc: 'OpenCC 중국어 번체'
   },
   themeColor: {
     title: '가사 테마 색상',

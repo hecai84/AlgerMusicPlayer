@@ -29,7 +29,8 @@ export default {
     list: 'Next'
   },
   lrc: {
-    noLrc: 'No lyrics, please enjoy'
+    noLrc: 'No lyrics, please enjoy',
+    noAutoScroll: 'This lyrics does not support auto-scroll'
   },
   reparse: {
     title: 'Select Music Source',
@@ -39,7 +40,9 @@ export default {
     warning: 'Please select a music source',
     bilibiliNotSupported: 'Bilibili videos do not support reparsing',
     processing: 'Processing...',
-    clear: 'Clear Custom Source'
+    clear: 'Clear Custom Source',
+    customApiFailed: 'Custom API parsing failed, trying built-in sources...',
+    customApiError: 'Custom API request error, trying built-in sources...'
   },
   playBar: {
     expand: 'Expand Lyrics',
