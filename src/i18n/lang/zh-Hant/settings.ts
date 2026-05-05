@@ -10,7 +10,7 @@ export default {
     network: '網路設定',
     system: '系統管理',
     donation: '捐贈支持',
-    regard: '關於'
+    about: '關於'
   },
   basic: {
     themeMode: '主題模式',
@@ -24,7 +24,7 @@ export default {
     tokenStatus: '目前Cookie狀態',
     tokenSet: '已設定',
     tokenNotSet: '未設定',
-    setCookie: '設定Cookie',
+    setToken: '設定Cookie',
     modifyToken: '修改Cookie',
     clearToken: '清除Cookie',
     font: '字體設定',
@@ -84,6 +84,10 @@ export default {
     gdmusicInfo: 'GD音樂台可自動解析多個平台音源，自動選擇最佳結果',
     autoPlay: '自動播放',
     autoPlayDesc: '重新開啟應用程式時是否自動繼續播放',
+    audioDevice: '音訊輸出裝置',
+    audioDeviceDesc: '選擇音訊輸出裝置，如揚聲器、耳機或藍牙裝置',
+    testAudio: '測試',
+    selectAudioDevice: '選擇輸出裝置',
     showStatusBar: '是否顯示狀態列控制功能',
     showStatusBarContent: '可以在您的mac狀態列顯示音樂控制功能(重啟後生效)',
     fallbackParser: '備用解析服務 (GD音樂台)',
@@ -93,14 +97,17 @@ export default {
 
     // 音源標籤
     sourceLabels: {
-      migu: '咪咕音樂',
-      kugou: '酷狗音樂',
-      pyncmd: '網易雲（內建）',
+      migu: 'migu',
+      kugou: 'kugou',
+      kuwo: 'kuwo',
+      pyncmd: 'pyncmd',
+      qq: 'qq',
+      joox: 'JOOX',
       bilibili: 'Bilibili',
-      gdmusic: 'GD音樂台',
+      gdmusic: 'gdmusic',
+      lxMusic: 'lxMusic',
       custom: '自訂 API'
     },
-
     customApi: {
       sectionTitle: '自訂 API 設定',
       importConfig: '匯入 JSON 設定',
@@ -108,7 +115,38 @@ export default {
       notImported: '尚未匯入自訂音源。',
       importSuccess: '成功匯入音源：{name}',
       importFailed: '匯入失敗：{message}',
-      enableHint: '請先匯入 JSON 設定檔才能啟用'
+      enableHint: '請先匯入 JSON 設定檔才能啟用',
+      status: {
+        imported: '已匯入自訂音源',
+        notImported: '未匯入'
+      }
+    },
+    lxMusic: {
+      tabs: {
+        sources: '音源選擇',
+        lxMusic: '落雪音源',
+        customApi: '自訂API'
+      },
+      scripts: {
+        title: '已匯入的音源腳本',
+        importLocal: '本機匯入',
+        importOnline: '線上匯入',
+        urlPlaceholder: '輸入落雪音源腳本 URL',
+        importBtn: '匯入',
+        empty: '暫無已匯入的落雪音源',
+        notConfigured: '未設定 (請至落雪音源分頁設定)',
+        importHint: '匯入相容的自訂 API 外掛以擴充音源',
+        noScriptWarning: '請先匯入落雪音源腳本',
+        noSelectionWarning: '請先選擇一個落雪音源',
+        notFound: '音源不存在',
+        switched: '已切換到音源: {name}',
+        deleted: '已刪除音源: {name}',
+        enterUrl: '請輸入腳本 URL',
+        invalidUrl: '無效的 URL 格式',
+        invalidScript: '無效的落雪音源腳本，未找到 globalThis.lx 相關程式碼',
+        nameRequired: '名稱不能為空',
+        renameSuccess: '重新命名成功'
+      }
     }
   },
   application: {
@@ -151,6 +189,35 @@ export default {
   system: {
     cache: '快取管理',
     cacheDesc: '清除快取',
+    diskCache: '磁碟快取',
+    diskCacheDesc: '將播放過的音樂與歌詞快取到本機磁碟，加速二次播放',
+    cacheDirectory: '快取目錄',
+    cacheDirectoryDesc: '自訂音樂與歌詞快取儲存位置',
+    selectDirectory: '選擇目錄',
+    openDirectory: '開啟目錄',
+    cacheMaxSize: '快取上限',
+    cacheMaxSizeDesc: '達到上限時會自動清理較舊快取',
+    cleanupPolicy: '清理策略',
+    cleanupPolicyDesc: '快取達到上限時的自動清理規則',
+    cleanupPolicyOptions: {
+      lru: '最近最少使用',
+      fifo: '先進先出'
+    },
+    cacheStatus: '快取狀態',
+    cacheStatusDesc: '已用 {used} / 上限 {limit}',
+    cacheStatusDetail: '音樂 {musicCount} 首，歌詞 {lyricCount} 首',
+    manageDiskCache: '手動清理磁碟快取',
+    manageDiskCacheDesc: '依快取類型進行清理',
+    clearMusicCache: '清理音樂快取',
+    clearLyricCache: '清理歌詞快取',
+    clearAllCache: '清理全部快取',
+    switchDirectoryMigrateTitle: '偵測到既有快取',
+    switchDirectoryMigrateContent: '是否將舊目錄快取搬移到新目錄？',
+    switchDirectoryMigrateConfirm: '搬移',
+    switchDirectoryDestroyTitle: '是否刪除舊快取',
+    switchDirectoryDestroyContent: '不搬移時，是否刪除舊目錄的快取檔案？',
+    switchDirectoryDestroyConfirm: '刪除',
+    switchDirectoryKeepOld: '保留舊快取',
     cacheClearTitle: '請選擇要清除的快取類型：',
     cacheTypes: {
       history: {
@@ -185,7 +252,14 @@ export default {
     restart: '重新啟動',
     restartDesc: '重新啟動應用程式',
     messages: {
-      clearSuccess: '清除成功，部分設定在重啟後生效'
+      clearSuccess: '清除成功，部分設定在重啟後生效',
+      diskCacheClearSuccess: '磁碟快取已清理',
+      diskCacheClearFailed: '清理磁碟快取失敗',
+      diskCacheStatsLoadFailed: '讀取快取狀態失敗',
+      switchDirectorySuccess: '快取目錄已切換，舊快取已保留',
+      switchDirectoryFailed: '快取目錄切換失敗',
+      switchDirectoryMigrated: '快取目錄已切換，已搬移 {count} 個快取檔案',
+      switchDirectoryDestroyed: '快取目錄已切換，已刪除 {count} 個舊快取檔案'
     }
   },
   about: {
@@ -195,6 +269,7 @@ export default {
     latest: '目前已是最新版本',
     hasUpdate: '發現新版本',
     gotoUpdate: '前往更新',
+    manualUpdate: '官網更新',
     gotoGithub: '前往 Github',
     author: '作者',
     authorDesc: 'algerkong 點個star🌟呗',
@@ -213,6 +288,7 @@ export default {
       display: '顯示',
       interface: '介面',
       typography: '文字',
+      background: '背景',
       mobile: '行動端'
     },
     pureMode: '純淨模式',
@@ -235,11 +311,77 @@ export default {
       medium: '中',
       large: '大'
     },
+    fontWeight: '字體粗細',
+    fontWeightMarks: {
+      thin: '細',
+      normal: '常規',
+      bold: '粗'
+    },
     letterSpacing: '字間距',
     letterSpacingMarks: {
       compact: '緊湊',
       default: '預設',
       loose: '寬鬆'
+    },
+    lineHeight: '行高',
+    lineHeightMarks: {
+      compact: '緊湊',
+      default: '預設',
+      loose: '寬鬆'
+    },
+    contentWidth: '內容區寬度',
+    mobileLayout: '行動端佈局',
+    layoutOptions: {
+      default: '預設',
+      ios: 'iOS 風格',
+      android: 'Android 風格'
+    },
+    mobileCoverStyle: '封面風格',
+    coverOptions: {
+      record: '唱片',
+      square: '方形',
+      full: '全螢幕'
+    },
+    lyricLines: '歌詞行數',
+    mobileUnavailable: '此設定僅在行動端可用',
+    // 背景設定
+    background: {
+      useCustomBackground: '使用自訂背景',
+      backgroundMode: '背景模式',
+      modeOptions: {
+        solid: '純色',
+        gradient: '漸層',
+        image: '圖片',
+        css: 'CSS'
+      },
+      solidColor: '選擇顏色',
+      presetColors: '預設顏色',
+      customColor: '自訂顏色',
+      gradientEditor: '漸層編輯器',
+      gradientColors: '漸層顏色',
+      gradientDirection: '漸層方向',
+      directionOptions: {
+        toBottom: '上到下',
+        toRight: '左到右',
+        toBottomRight: '左上到右下',
+        angle45: '45度',
+        toTop: '下到上',
+        toLeft: '右到左'
+      },
+      addColor: '新增顏色',
+      removeColor: '移除顏色',
+      imageUpload: '上傳圖片',
+      imagePreview: '圖片預覽',
+      clearImage: '清除圖片',
+      imageBlur: '模糊度',
+      imageBrightness: '明暗度',
+      customCss: '自訂 CSS 樣式',
+      customCssPlaceholder: '輸入 CSS 樣式，如: background: linear-gradient(...)',
+      customCssHelp: '支援任意 CSS background 屬性',
+      reset: '重設為預設',
+      fileSizeLimit: '圖片大小限制: 20MB',
+      invalidImageFormat: '無效的圖片格式',
+      imageTooLarge: '圖片過大，請選擇小於 20MB 的圖片'
     }
   },
   themeColor: {
@@ -266,6 +408,79 @@ export default {
   translationEngineOptions: {
     none: '關閉',
     opencc: 'OpenCC 繁化'
+  },
+  shortcutSettings: {
+    title: '快捷鍵設定',
+    shortcut: '快捷鍵',
+    shortcutDesc: '自訂快捷鍵',
+    summaryReady: '目前快捷鍵設定可直接儲存',
+    summaryRecording: '正在錄製新的快捷鍵組合',
+    summaryBlocked: '存在衝突或無效項目，請先修正',
+    platformHintMac: 'macOS 下 CommandOrControl 會顯示為 Cmd',
+    platformHintWindows: 'Windows 下 CommandOrControl 會顯示為 Ctrl',
+    platformHintLinux: 'Linux 下 CommandOrControl 會顯示為 Ctrl',
+    platformHintGeneric: 'CommandOrControl 會依系統自動適配',
+    enabledCount: '已啟用',
+    recordingTip: '點擊快捷鍵欄位後輸入組合鍵，Esc 取消，Delete 可停用',
+    shortcutConflict: '快捷鍵衝突',
+    inputPlaceholder: '點擊輸入快捷鍵',
+    clickToRecord: '點擊後輸入快捷鍵',
+    recording: '錄製中...',
+    resetShortcuts: '恢復預設',
+    restoreSingle: '恢復',
+    disableAll: '全部停用',
+    enableAll: '全部啟用',
+    groups: {
+      playback: '播放控制',
+      sound: '音量與收藏',
+      window: '視窗控制'
+    },
+    togglePlay: '播放/暫停',
+    togglePlayDesc: '切換目前歌曲播放狀態',
+    prevPlay: '上一首',
+    prevPlayDesc: '切換到上一首歌曲',
+    nextPlay: '下一首',
+    nextPlayDesc: '切換到下一首歌曲',
+    volumeUp: '增加音量',
+    volumeUpDesc: '提高播放器音量',
+    volumeDown: '減少音量',
+    volumeDownDesc: '降低播放器音量',
+    toggleFavorite: '收藏/取消收藏',
+    toggleFavoriteDesc: '收藏或取消目前歌曲',
+    toggleWindow: '顯示/隱藏視窗',
+    toggleWindowDesc: '快速顯示或隱藏主視窗',
+    scopeGlobal: '全域',
+    scopeApp: '應用程式內',
+    enabled: '已啟用',
+    disabled: '已停用',
+    issueInvalid: '組合無效',
+    issueReserved: '系統保留',
+    registrationWarningTitle: '以下快捷鍵未能註冊，請改用其他組合',
+    registrationOccupied: '被系統或其他應用程式占用',
+    registrationInvalid: '鍵位格式無效',
+    messages: {
+      resetSuccess: '已恢復預設快捷鍵，請記得儲存',
+      conflict: '存在快捷鍵衝突，請重新設定',
+      saveSuccess: '快捷鍵設定已儲存',
+      saveError: '快捷鍵儲存失敗，請重試',
+      saveValidationError: '快捷鍵校驗未通過，請檢查後重試',
+      partialRegistered: '已儲存，但部分全域快捷鍵未註冊成功',
+      cancelEdit: '已取消修改',
+      clearToDisable: '已停用該快捷鍵',
+      invalidShortcut: '快捷鍵無效，請輸入有效組合',
+      disableAll: '已停用所有快捷鍵，請記得儲存',
+      enableAll: '已啟用所有快捷鍵，請記得儲存'
+    }
+  },
+  remoteControl: {
+    title: '遠端控制',
+    enable: '啟用遠端控制',
+    port: '服務連接埠',
+    allowedIps: '允許的 IP 位址',
+    addIp: '新增 IP',
+    emptyListHint: '空白清單表示允許所有 IP 存取',
+    saveSuccess: '遠端控制設定已儲存',
+    accessInfo: '遠端控制存取位址：'
   },
   cookie: {
     title: 'Cookie設定',

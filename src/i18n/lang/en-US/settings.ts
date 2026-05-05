@@ -10,7 +10,7 @@ export default {
     network: 'Network Settings',
     system: 'System Management',
     donation: 'Donation',
-    regard: 'About'
+    about: 'About'
   },
   basic: {
     themeMode: 'Theme Mode',
@@ -88,6 +88,10 @@ export default {
       'GD Music Station intelligently resolves music from multiple platforms automatically',
     autoPlay: 'Auto Play',
     autoPlayDesc: 'Auto resume playback when reopening the app',
+    audioDevice: 'Audio Output Device',
+    audioDeviceDesc: 'Select audio output device such as speakers, headphones or Bluetooth devices',
+    testAudio: 'Test',
+    selectAudioDevice: 'Select output device',
     showStatusBar: 'Show Status Bar',
     showStatusBarContent:
       'You can display the music control function in your mac status bar (effective after a restart)',
@@ -101,9 +105,13 @@ export default {
     sourceLabels: {
       migu: 'Migu',
       kugou: 'Kugou',
+      kuwo: 'Kuwo',
       pyncmd: 'NetEase (Built-in)',
+      qq: 'QQ Music',
+      joox: 'JOOX',
       bilibili: 'Bilibili',
       gdmusic: 'GD Music',
+      lxMusic: 'LX Music',
       custom: 'Custom API'
     },
 
@@ -114,7 +122,38 @@ export default {
       notImported: 'No custom source imported yet.',
       importSuccess: 'Successfully imported source: {name}',
       importFailed: 'Import failed: {message}',
-      enableHint: 'Import a JSON config file to enable'
+      enableHint: 'Import a JSON config file to enable',
+      status: {
+        imported: 'Custom Source Imported',
+        notImported: 'Not Imported'
+      }
+    },
+    lxMusic: {
+      tabs: {
+        sources: 'Source Selection',
+        lxMusic: 'LX Music',
+        customApi: 'Custom API'
+      },
+      scripts: {
+        title: 'Imported Scripts',
+        importLocal: 'Import Local',
+        importOnline: 'Import Online',
+        urlPlaceholder: 'Enter LX Music Script URL',
+        importBtn: 'Import',
+        empty: 'No imported LX Music scripts',
+        notConfigured: 'Not configured (Configure in LX Music Tab)',
+        importHint: 'Import compatible custom API plugins to extend sources',
+        noScriptWarning: 'Please import LX Music script first',
+        noSelectionWarning: 'Please select an LX Music source first',
+        notFound: 'Source not found',
+        switched: 'Switched to source: {name}',
+        deleted: 'Deleted source: {name}',
+        enterUrl: 'Please enter script URL',
+        invalidUrl: 'Invalid URL format',
+        invalidScript: 'Invalid LX Music script, globalThis.lx code not found',
+        nameRequired: 'Name cannot be empty',
+        renameSuccess: 'Rename successful'
+      }
     }
   },
   application: {
@@ -157,6 +196,36 @@ export default {
   system: {
     cache: 'Cache Management',
     cacheDesc: 'Clear cache',
+    diskCache: 'Disk Cache',
+    diskCacheDesc: 'Cache played music and lyrics on local disk to speed up repeated playback',
+    cacheDirectory: 'Cache Directory',
+    cacheDirectoryDesc: 'Custom directory for music and lyric cache files',
+    selectDirectory: 'Select Directory',
+    openDirectory: 'Open Directory',
+    cacheMaxSize: 'Cache Size Limit',
+    cacheMaxSizeDesc: 'Older cache items are cleaned automatically when limit is reached',
+    cleanupPolicy: 'Cleanup Policy',
+    cleanupPolicyDesc: 'Auto cleanup rule when cache reaches the size limit',
+    cleanupPolicyOptions: {
+      lru: 'Least Recently Used',
+      fifo: 'First In, First Out'
+    },
+    cacheStatus: 'Cache Status',
+    cacheStatusDesc: 'Used {used} / Limit {limit}',
+    cacheStatusDetail: 'Music {musicCount}, Lyrics {lyricCount}',
+    manageDiskCache: 'Manual Disk Cache Cleanup',
+    manageDiskCacheDesc: 'Clean cache by category',
+    clearMusicCache: 'Clear Music Cache',
+    clearLyricCache: 'Clear Lyric Cache',
+    clearAllCache: 'Clear All Cache',
+    switchDirectoryMigrateTitle: 'Existing Cache Detected',
+    switchDirectoryMigrateContent: 'Do you want to migrate old cache files to the new directory?',
+    switchDirectoryMigrateConfirm: 'Migrate',
+    switchDirectoryDestroyTitle: 'Destroy Old Cache',
+    switchDirectoryDestroyContent:
+      'If you do not migrate, do you want to destroy old cache files in the previous directory?',
+    switchDirectoryDestroyConfirm: 'Destroy',
+    switchDirectoryKeepOld: 'Keep Old Cache',
     cacheClearTitle: 'Select cache types to clear:',
     cacheTypes: {
       history: {
@@ -191,7 +260,14 @@ export default {
     restart: 'Restart',
     restartDesc: 'Restart application',
     messages: {
-      clearSuccess: 'Cache cleared successfully, some settings will take effect after restart'
+      clearSuccess: 'Cache cleared successfully, some settings will take effect after restart',
+      diskCacheClearSuccess: 'Disk cache cleaned',
+      diskCacheClearFailed: 'Failed to clean disk cache',
+      diskCacheStatsLoadFailed: 'Failed to load cache status',
+      switchDirectorySuccess: 'Cache directory switched, old cache is kept',
+      switchDirectoryFailed: 'Failed to switch cache directory',
+      switchDirectoryMigrated: 'Cache directory switched, migrated {count} cache files',
+      switchDirectoryDestroyed: 'Cache directory switched, destroyed {count} old cache files'
     }
   },
   about: {
@@ -201,6 +277,7 @@ export default {
     latest: 'Already latest version',
     hasUpdate: 'New version available',
     gotoUpdate: 'Go to Update',
+    manualUpdate: 'Manual Update',
     gotoGithub: 'Go to Github',
     author: 'Author',
     authorDesc: 'algerkong Give a star🌟',
@@ -219,6 +296,7 @@ export default {
       display: 'Display',
       interface: 'Interface',
       typography: 'Typography',
+      background: 'Background',
       mobile: 'Mobile'
     },
     pureMode: 'Pure Mode',
@@ -241,6 +319,12 @@ export default {
       medium: 'Medium',
       large: 'Large'
     },
+    fontWeight: 'Font Weight',
+    fontWeightMarks: {
+      thin: 'Thin',
+      normal: 'Normal',
+      bold: 'Bold'
+    },
     letterSpacing: 'Letter Spacing',
     letterSpacingMarks: {
       compact: 'Compact',
@@ -253,6 +337,7 @@ export default {
       default: 'Default',
       loose: 'Loose'
     },
+    contentWidth: 'Content Width',
     mobileLayout: 'Mobile Layout',
     layoutOptions: {
       default: 'Default',
@@ -266,7 +351,46 @@ export default {
       full: 'Full Screen'
     },
     lyricLines: 'Lyric Lines',
-    mobileUnavailable: 'This setting is only available on mobile devices'
+    mobileUnavailable: 'This setting is only available on mobile devices',
+    // Background settings
+    background: {
+      useCustomBackground: 'Use Custom Background',
+      backgroundMode: 'Background Mode',
+      modeOptions: {
+        solid: 'Solid',
+        gradient: 'Gradient',
+        image: 'Image',
+        css: 'CSS'
+      },
+      solidColor: 'Select Color',
+      presetColors: 'Preset Colors',
+      customColor: 'Custom Color',
+      gradientEditor: 'Gradient Editor',
+      gradientColors: 'Gradient Colors',
+      gradientDirection: 'Gradient Direction',
+      directionOptions: {
+        toBottom: 'Top to Bottom',
+        toRight: 'Left to Right',
+        toBottomRight: 'Top Left to Bottom Right',
+        angle45: '45 Degrees',
+        toTop: 'Bottom to Top',
+        toLeft: 'Right to Left'
+      },
+      addColor: 'Add Color',
+      removeColor: 'Remove Color',
+      imageUpload: 'Upload Image',
+      imagePreview: 'Image Preview',
+      clearImage: 'Clear Image',
+      imageBlur: 'Blur',
+      imageBrightness: 'Brightness',
+      customCss: 'Custom CSS Style',
+      customCssPlaceholder: 'Enter CSS style, e.g.: background: linear-gradient(...)',
+      customCssHelp: 'Supports any CSS background property',
+      reset: 'Reset to Default',
+      fileSizeLimit: 'Image size limit: 20MB',
+      invalidImageFormat: 'Invalid image format',
+      imageTooLarge: 'Image too large, please select an image smaller than 20MB'
+    }
   },
   translationEngine: 'Lyric Translation Engine',
   translationEngineOptions: {
@@ -297,28 +421,61 @@ export default {
     title: 'Shortcut Settings',
     shortcut: 'Shortcut',
     shortcutDesc: 'Customize global shortcuts',
+    summaryReady: 'Shortcut configuration is ready to save',
+    summaryRecording: 'Recording a new shortcut combination',
+    summaryBlocked: 'Fix conflicts or invalid entries before saving',
+    platformHintMac: 'On macOS, CommandOrControl is displayed as Cmd',
+    platformHintWindows: 'On Windows, CommandOrControl is displayed as Ctrl',
+    platformHintLinux: 'On Linux, CommandOrControl is displayed as Ctrl',
+    platformHintGeneric: 'CommandOrControl is adapted per operating system',
+    enabledCount: 'Enabled',
+    recordingTip: 'Click a shortcut field, press combination. Esc cancels, Delete disables',
     shortcutConflict: 'Shortcut Conflict',
     inputPlaceholder: 'Click to input shortcut',
+    clickToRecord: 'Click then press a shortcut',
+    recording: 'Recording...',
     resetShortcuts: 'Reset',
+    restoreSingle: 'Restore',
     disableAll: 'Disable All',
     enableAll: 'Enable All',
+    groups: {
+      playback: 'Playback',
+      sound: 'Volume & Favorite',
+      window: 'Window'
+    },
     togglePlay: 'Play/Pause',
+    togglePlayDesc: 'Toggle current playback state',
     prevPlay: 'Previous',
+    prevPlayDesc: 'Play the previous track',
     nextPlay: 'Next',
+    nextPlayDesc: 'Play the next track',
     volumeUp: 'Volume Up',
+    volumeUpDesc: 'Increase player volume',
     volumeDown: 'Volume Down',
+    volumeDownDesc: 'Decrease player volume',
     toggleFavorite: 'Favorite/Unfavorite',
+    toggleFavoriteDesc: 'Favorite or unfavorite current track',
     toggleWindow: 'Show/Hide Window',
+    toggleWindowDesc: 'Quickly show or hide the main window',
     scopeGlobal: 'Global',
     scopeApp: 'App Only',
     enabled: 'Enabled',
     disabled: 'Disabled',
+    issueInvalid: 'Invalid combo',
+    issueReserved: 'System reserved',
+    registrationWarningTitle: 'These shortcuts could not be registered',
+    registrationOccupied: 'Occupied by system or another app',
+    registrationInvalid: 'Invalid shortcut format',
     messages: {
       resetSuccess: 'Shortcuts reset successfully, please save',
       conflict: 'Shortcut conflict, please reset',
       saveSuccess: 'Shortcuts saved successfully',
       saveError: 'Failed to save shortcuts',
+      saveValidationError: 'Shortcut validation failed, please review and try again',
+      partialRegistered: 'Saved, but some global shortcuts were not registered',
       cancelEdit: 'Edit cancelled',
+      clearToDisable: 'Shortcut disabled',
+      invalidShortcut: 'Invalid shortcut, please use a valid combination',
       disableAll: 'All shortcuts disabled, please save to apply',
       enableAll: 'All shortcuts enabled, please save to apply'
     }

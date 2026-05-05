@@ -30,6 +30,18 @@ resources/android/**/*
 android/app/release
 
 .cursor
+.windsurf
+.agent
+.agents
+.claude
+.kiro
+CLAUDE.md
+AGENTS.md
+.sisyphus
+
+.worktrees
+
+
 
 .auto-imports.d.ts
 .components.d.ts
@@ -37,3 +49,4 @@ android/app/release
 src/renderer/auto-imports.d.ts
 src/renderer/components.d.ts
 .history/
+

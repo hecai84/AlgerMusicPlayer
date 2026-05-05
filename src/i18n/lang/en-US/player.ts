@@ -14,6 +14,12 @@ export default {
   addCorrection: 'Add {num} seconds',
   subtractCorrection: 'Subtract {num} seconds',
   playFailed: 'Play Failed, Play Next Song',
+  parseFailedPlayNext: 'Song parsing failed, playing next',
+  consecutiveFailsError:
+    'Playback error, possibly due to network issues or invalid source. Please switch playlist or try again later',
+  playListEnded: 'Reached the end of the playlist',
+  autoResumed: 'Playback resumed automatically',
+  resumeFailed: 'Failed to resume playback, please try manually',
   playMode: {
     sequence: 'Sequence',
     loop: 'Loop',
@@ -53,6 +59,7 @@ export default {
     eq: 'Equalizer',
     playList: 'Play List',
     reparse: 'Reparse',
+    miniPlayBar: 'Mini Play Bar',
     playMode: {
       sequence: 'Sequence',
       loop: 'Loop',
@@ -66,7 +73,17 @@ export default {
     favorite: 'Favorite {name}',
     unFavorite: 'Unfavorite {name}',
     playbackSpeed: 'Playback Speed',
-    advancedControls: 'Advanced Controls'
+    advancedControls: 'Advanced Controls',
+    intelligenceMode: {
+      title: 'Intelligence Mode',
+      needCookieLogin: 'Please login with Cookie method to use Intelligence Mode',
+      noFavoritePlaylist: 'Favorite playlist not found',
+      noLikedSongs: 'You have no liked songs yet',
+      loading: 'Loading Intelligence Mode',
+      success: 'Loaded {count} songs',
+      failed: 'Failed to get Intelligence Mode list',
+      error: 'Intelligence Mode error'
+    }
   },
   eq: {
     title: 'Equalizer',
@@ -91,6 +108,11 @@ export default {
       acoustic: 'Acoustic',
       custom: 'Custom'
     }
+  },
+  // Playback settings
+  settings: {
+    title: 'Playback Settings',
+    playbackSpeed: 'Playback Speed'
   },
   // Sleep timer related
   sleepTimer: {

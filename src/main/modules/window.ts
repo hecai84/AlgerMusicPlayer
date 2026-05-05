@@ -15,6 +15,7 @@ import { join } from 'path';
 import {
   applyContentZoom,
   applyInitialState,
+  calculateMinimumWindowSize,
   DEFAULT_MAIN_HEIGHT,
   DEFAULT_MAIN_WIDTH,
   DEFAULT_MINI_HEIGHT,
@@ -143,6 +144,12 @@ export function initializeWindowManager() {
     }
   });
 
+  // 强制退出应用（用于免责声明拒绝等场景）
+  ipcMain.on('quit-app', () => {
+    setAppQuitting(true);
+    app.quit();
+  });
+
   ipcMain.on('mini-tray', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
@@ -198,10 +205,8 @@ export function initializeWindowManager() {
       console.log('从迷你模式恢复，使用保存的状态:', JSON.stringify(preMiniModeState));
 
       // 设置适当的最小尺寸
-      win.setMinimumSize(
-        Math.max(DEFAULT_MAIN_WIDTH * 0.5, 600),
-        Math.max(DEFAULT_MAIN_HEIGHT * 0.5, 400)
-      );
+      const { minWidth, minHeight } = calculateMinimumWindowSize();
+      win.setMinimumSize(minWidth, minHeight);
 
       // 恢复窗口状态
       win.setAlwaysOnTop(false);
@@ -312,6 +317,42 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
   // 创建窗口
   const mainWindow = new BrowserWindow(options);
 
+  const appOrigin = (() => {
+    if (!is.dev || !process.env.ELECTRON_RENDERER_URL) return null;
+    try {
+      return new URL(process.env.ELECTRON_RENDERER_URL).origin;
+    } catch {
+      return null;
+    }
+  })();
+
+  const shouldOpenInBrowser = (targetUrl: string): boolean => {
+    try {
+      const parsedUrl = new URL(targetUrl);
+      if (parsedUrl.protocol === 'mailto:' || parsedUrl.protocol === 'tel:') {
+        return true;
+      }
+
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        return false;
+      }
+
+      if (appOrigin && parsedUrl.origin === appOrigin) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const openInSystemBrowser = (targetUrl: string) => {
+    shell.openExternal(targetUrl).catch((error) => {
+      console.error('打开外部链接失败:', targetUrl, error);
+    });
+  };
+
   // 移除菜单
   mainWindow.removeMenu();
 
@@ -375,8 +416,16 @@ export function createMainWindow(icon: Electron.NativeImage): BrowserWindow {
     }, 100);
   });
 
+  mainWindow.webContents.on('will-navigate', (event, targetUrl) => {
+    if (!shouldOpenInBrowser(targetUrl)) return;
+    event.preventDefault();
+    openInSystemBrowser(targetUrl);
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
+    if (shouldOpenInBrowser(details.url)) {
+      openInSystemBrowser(details.url);
+    }
     return { action: 'deny' };
   });
 

@@ -17,8 +17,7 @@ const layoutRouter = [
       title: 'comp.search',
       noScroll: true,
       icon: 'icon-Search',
-      keepAlive: true,
-      isMobile: true
+      keepAlive: true
     },
     component: () => import('@/views/search/index.vue')
   },
@@ -32,6 +31,17 @@ const layoutRouter = [
       isMobile: true
     },
     component: () => import('@/views/list/index.vue')
+  },
+  {
+    path: '/album',
+    name: 'album',
+    meta: {
+      title: 'comp.newAlbum.title',
+      icon: 'ri-album-fill',
+      keepAlive: true,
+      isMobile: true
+    },
+    component: () => import('@/views/album/index.vue')
   },
   {
     path: '/toplist',
@@ -51,9 +61,23 @@ const layoutRouter = [
       title: 'comp.mv',
       icon: 'icon-recordfill',
       keepAlive: true,
-      isMobile: false
+      isMobile: false,
+      back: true,
+      hideInSidebar: true
     },
     component: () => import('@/views/mv/index.vue')
+  },
+  {
+    path: '/podcast',
+    name: 'podcast',
+    meta: {
+      title: 'podcast.podcast',
+      icon: 'ri-radio-fill',
+      keepAlive: true,
+      isMobile: false,
+      back: true
+    },
+    component: () => import('@/views/podcast/index.vue')
   },
   {
     path: '/history',
@@ -62,8 +86,22 @@ const layoutRouter = [
     meta: {
       title: 'comp.history',
       icon: 'icon-a-TicketStar',
-      keepAlive: true
+      keepAlive: true,
+      isMobile: true
     }
+  },
+  {
+    path: '/local-music',
+    name: 'localMusic',
+    meta: {
+      title: 'comp.localMusic',
+      icon: 'ri-folder-music-fill',
+      keepAlive: true,
+      isMobile: false,
+      electronOnly: true,
+      hideInSidebar: true
+    },
+    component: () => import('@/views/local-music/index.vue')
   },
   {
     path: '/user',

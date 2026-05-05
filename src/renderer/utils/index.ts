@@ -32,6 +32,19 @@ export const setAnimationDelay = (index: number = 6, time: number = 50) => {
   return `animation-delay:${(index * time) / (speed * 2)}ms`;
 };
 
+// 计算动画延迟(秒) - 用于新的动画效果
+// 根据动画速度配置自动调整延迟时间
+export const calculateAnimationDelay = (index: any, baseDelay: number = 0.03): string => {
+  const settingsStore = useSettingsStore();
+  if (settingsStore.setData?.noAnimate) {
+    return '0s';
+  }
+  const speed = settingsStore.setData?.animationSpeed || 1;
+  // 速度越快，延迟应该越短，所以除以 speed
+  const delay = (index * baseDelay) / speed;
+  return `${delay.toFixed(3)}s`;
+};
+
 // 将秒转换为分钟和秒
 export const secondToMinute = (s: number) => {
   if (!s) {
@@ -62,6 +75,9 @@ export const formatNumber = (num: string | number) => {
 
 export const getImgUrl = (url: string | undefined, size: string = '') => {
   if (!url) return '';
+
+  // base64 Data URL 和本地文件路径不需要添加尺寸参数
+  if (url.startsWith('data:') || url.startsWith('local://')) return url;
 
   if (url.includes('thumbnail')) {
     // 只替换最后一个 thumbnail 参数的尺寸

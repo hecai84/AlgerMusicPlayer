@@ -25,6 +25,7 @@
       @play="playMusicEvent(item)"
       @play-next="handlePlayNext"
       @download="downloadMusic(item)"
+      @download-lyric="downloadLyric(item)"
       @toggle-favorite="toggleFavorite"
       @toggle-dislike="toggleDislike"
       @remove="$emit('remove-song', $event)"
@@ -71,7 +72,8 @@ const {
   handleArtistClick,
   handleMouseEnter,
   handleMouseLeave,
-  downloadMusic
+  downloadMusic,
+  downloadLyric
 } = useSongItem(props);
 
 // 处理图片加载
@@ -110,7 +112,7 @@ defineExpose({
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  @apply rounded-3xl p-3 flex items-center transition bg-transparent dark:text-white text-gray-900;
+  @apply rounded-xl p-3 flex items-center transition bg-transparent dark:text-white text-gray-900;
 }
 
 .text-ellipsis {

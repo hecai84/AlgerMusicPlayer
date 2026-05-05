@@ -14,6 +14,12 @@ export default {
   addCorrection: '{num}秒早める',
   subtractCorrection: '{num}秒遅らせる',
   playFailed: '現在の楽曲の再生に失敗しました。次の曲を再生します',
+  parseFailedPlayNext: '楽曲の解析に失敗しました。次の曲を再生します',
+  consecutiveFailsError:
+    '再生エラーが発生しました。ネットワークの問題または無効な音源の可能性があります。プレイリストを切り替えるか、後でもう一度お試しください',
+  playListEnded: 'プレイリストの最後に到達しました',
+  autoResumed: '自動的に再生を再開しました',
+  resumeFailed: '再生の再開に失敗しました。手動でお試しください',
   playMode: {
     sequence: '順次再生',
     loop: 'リピート再生',
@@ -67,7 +73,17 @@ export default {
     unFavorite: '{name}をお気に入りから削除しました',
     miniPlayBar: 'ミニ再生バー',
     playbackSpeed: '再生速度',
-    advancedControls: 'その他の設定'
+    advancedControls: 'その他の設定',
+    intelligenceMode: {
+      title: 'インテリジェンスモード',
+      needCookieLogin: 'Cookie方式でログインしてからインテリジェンスモードを使用してください',
+      noFavoritePlaylist: '「お気に入りの音楽」プレイリストが見つかりません',
+      noLikedSongs: 'まだ「いいね」した楽曲がありません',
+      loading: 'インテリジェンスモードを読み込み中',
+      success: '{count} 曲を読み込みました',
+      failed: 'インテリジェンスモードのリスト取得に失敗しました',
+      error: 'インテリジェンスモードの再生でエラーが発生しました'
+    }
   },
   eq: {
     title: 'イコライザー',
@@ -92,6 +108,11 @@ export default {
       acoustic: 'アコースティック',
       custom: 'カスタム'
     }
+  },
+  // プレイヤー設定
+  settings: {
+    title: '再生設定',
+    playbackSpeed: '再生速度'
   },
   // タイマー機能関連
   sleepTimer: {

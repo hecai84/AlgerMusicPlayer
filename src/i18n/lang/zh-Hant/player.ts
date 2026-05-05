@@ -14,6 +14,11 @@ export default {
   addCorrection: '提前 {num} 秒',
   subtractCorrection: '延遲 {num} 秒',
   playFailed: '目前歌曲播放失敗，播放下一首',
+  parseFailedPlayNext: '歌曲解析失敗，播放下一首',
+  consecutiveFailsError: '播放遇到錯誤，可能是網路波動或解析源失效，請切換播放清單或稍後重試',
+  playListEnded: '已播放到列表最後一首',
+  autoResumed: '已自動恢復播放',
+  resumeFailed: '恢復播放失敗，請手動點擊播放',
   playMode: {
     sequence: '順序播放',
     loop: '單曲循環',
@@ -67,7 +72,17 @@ export default {
     unFavorite: '已取消收藏{name}',
     miniPlayBar: '迷你播放列',
     playbackSpeed: '播放速度',
-    advancedControls: '更多設定s'
+    advancedControls: '更多設定',
+    intelligenceMode: {
+      title: '心動模式',
+      needCookieLogin: '請使用 Cookie 方式登入後使用心動模式',
+      noFavoritePlaylist: '未找到我喜歡的音樂歌單',
+      noLikedSongs: '您還沒有喜歡的歌曲',
+      loading: '正在載入心動模式',
+      success: '已載入 {count} 首歌曲',
+      failed: '取得心動模式清單失敗',
+      error: '心動模式播放出錯'
+    }
   },
   eq: {
     title: '等化器',
@@ -92,6 +107,11 @@ export default {
       acoustic: '原聲',
       custom: '自訂'
     }
+  },
+  // 播放器設定
+  settings: {
+    title: '播放設定',
+    playbackSpeed: '播放速度'
   },
   // 定時關閉功能相關
   sleepTimer: {

@@ -8,6 +8,13 @@ import { MusicParser, type MusicParseResult } from './musicParser';
 
 const { addData, getData, deleteData } = musicDB;
 
+// 将 FM 歌曲移至垃圾桶（不喜欢）
+export const fmTrash = (id: number) => {
+  return request.post('/fm_trash', null, {
+    params: { id, timestamp: Date.now() }
+  });
+};
+
 // 获取音乐音质详情
 export const getMusicQualityDetail = (id: number) => {
   return request.get('/song/music/detail', { params: { id } });
@@ -26,7 +33,6 @@ export const getMusicUrl = async (id: number, isDownloaded: boolean = false) => 
           id,
           level: settingStore.setData.musicQuality || 'higher',
           encodeType: settingStore.setData.musicQuality == 'lossless' ? 'aac' : 'flac',
-          // level为lossless时，encodeType=flac时网易云会返回hires音质，encodeType=aac时网易云会返回lossless音质
           cookie: `${localStorage.getItem('token')} os=pc;`
         }
       });
@@ -173,6 +179,52 @@ export function subscribePlaylist(params: { t: number; id: number }) {
   return request({
     url: '/playlist/subscribe',
     method: 'post',
+    params
+  });
+}
+
+/**
+ * 收藏/取消收藏专辑
+ * @param params t: 1 收藏, 2 取消收藏; id: 专辑id
+ */
+export function subscribeAlbum(params: { t: number; id: number }) {
+  return request({
+    url: '/album/sub',
+    method: 'post',
+    params
+  });
+}
+
+/**
+ * 获取历史日推可用日期列表
+ */
+export function getHistoryRecommendDates() {
+  return request({
+    url: '/history/recommend/songs',
+    method: 'get'
+  });
+}
+
+/**
+ * 获取历史日推详情数据
+ * @param date 日期，格式：YYYY-MM-DD
+ */
+export function getHistoryRecommendSongs(date: string) {
+  return request({
+    url: '/history/recommend/songs/detail',
+    method: 'get',
+    params: { date }
+  });
+}
+
+/**
+ * 心动模式/智能播放
+ * @param params id: 歌曲id, pid: 歌单id, sid: 要开始播放的歌曲id(可选)
+ */
+export function getIntelligenceList(params: { id: number; pid: number; sid?: number }) {
+  return request({
+    url: '/playmode/intelligence/list',
+    method: 'get',
     params
   });
 }

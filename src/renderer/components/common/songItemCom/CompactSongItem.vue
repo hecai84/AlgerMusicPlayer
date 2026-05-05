@@ -34,7 +34,7 @@
     <template #content>
       <div class="song-item-content-compact">
         <div class="song-item-content-compact-wrapper">
-          <div class="song-item-content-compact-title w-60 flex-shrink-0">
+          <div class="song-item-content-compact-title">
             <n-ellipsis
               class="text-ellipsis"
               line-clamp="1"
@@ -178,7 +178,7 @@ const formatDuration = (ms: number): string => {
 
 <style lang="scss" scoped>
 .compact-song-item {
-  @apply rounded-lg p-2 h-12 mb-1 border-b dark:border-gray-800 border-gray-100;
+  @apply rounded-xl p-2 h-12 mb-1 border-b dark:border-gray-800 border-gray-100;
 
   &:hover {
     @apply bg-gray-50 dark:bg-gray-700;
@@ -197,31 +197,31 @@ const formatDuration = (ms: number): string => {
   }
 
   .song-item-content-compact {
-    @apply flex-1 flex items-center gap-4;
+    @apply flex-1 flex items-center gap-2;
 
     &-wrapper {
-      @apply flex-1 min-w-0 flex items-center;
+      @apply flex-[2] flex items-center gap-2 min-w-0;
     }
 
     &-title {
-      @apply text-sm cursor-pointer text-gray-900 dark:text-white flex items-center;
+      @apply flex-[2.5] min-w-0 text-sm cursor-pointer text-gray-900 dark:text-white flex items-center;
     }
 
     &-artist {
-      @apply w-40 text-sm text-gray-500 dark:text-gray-400 ml-2 flex items-center;
+      @apply flex-[1.5] min-w-0 text-sm text-gray-500 dark:text-gray-400 flex items-center;
     }
 
     &-album {
-      @apply w-32 flex items-center text-sm text-gray-500 dark:text-gray-400;
+      @apply flex-[1.5] min-w-0 text-sm text-gray-500 dark:text-gray-400 flex items-center;
     }
 
     &-duration {
-      @apply w-16 flex items-center text-sm text-gray-500 dark:text-gray-400 text-right;
+      @apply w-14 flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 flex items-center justify-end;
     }
   }
 
   .song-item-operating-compact {
-    @apply border-none bg-transparent gap-2 flex items-center;
+    @apply border-none bg-transparent gap-3 flex items-center justify-end min-w-[160px];
 
     .song-item-operating-like,
     .song-item-operating-play,

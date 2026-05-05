@@ -1,5 +1,9 @@
 <template>
-  <div class="layout-page">
+  <!-- 移动端使用专用布局（平板模式下使用 PC 布局） -->
+  <mobile-layout v-if="isPhone && !settingsStore.setData?.tabletMode" :is-phone="isPhone" />
+
+  <!-- PC 端 / 浏览器移动端 / 平板模式 保持原有布局 -->
+  <div v-else class="layout-page" :class="{ mobile: settingsStore.isMobile }">
     <div id="layout-main" class="layout-main">
       <title-bar />
       <div class="layout-main-page">
@@ -7,7 +11,7 @@
         <app-menu v-if="!settingsStore.isMobile" class="menu" :menus="menuStore.menus" />
         <div class="main">
           <!-- 搜索栏 -->
-          <search-bar />
+          <search-bar class="search-bar" />
           <!-- 主页面路由 -->
           <div
             class="main-content"
@@ -25,7 +29,8 @@
             </router-view>
           </div>
           <play-bottom />
-          <app-menu v-if="shouldShowMobileMenu" class="menu" :menus="menuStore.menus" />
+          <!-- 移动端底部菜单（浏览器模拟移动端时使用） -->
+          <app-menu v-if="shouldShowMobileMenu" class="menu mobile-menu" :menus="menuStore.menus" />
         </div>
       </div>
       <!-- 底部音乐播放 -->
@@ -42,19 +47,9 @@
         />
       </template>
     </div>
-    <install-app-modal v-if="!isElectron"></install-app-modal>
     <update-modal v-if="isElectron" />
     <playlist-drawer v-model="showPlaylistDrawer" :song-id="currentSongId" />
     <sleep-timer-top v-if="!settingsStore.isMobile" />
-    <!-- 下载管理抽屉 -->
-    <download-drawer
-      v-if="
-        isElectron &&
-        (settingsStore.setData?.alwaysShowDownloadButton ||
-          settingsStore.showDownloadDrawer ||
-          settingsStore.setData?.hasDownloadingTasks)
-      "
-    />
     <!-- 播放列表抽屉 -->
     <playing-list-drawer />
   </div>
@@ -64,8 +59,6 @@
 import { computed, defineAsyncComponent, onMounted, provide, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import DownloadDrawer from '@/components/common/DownloadDrawer.vue';
-import InstallAppModal from '@/components/common/InstallAppModal.vue';
 import PlayBottom from '@/components/common/PlayBottom.vue';
 import UpdateModal from '@/components/common/UpdateModal.vue';
 import SleepTimerTop from '@/components/player/SleepTimerTop.vue';
@@ -75,6 +68,13 @@ import { useMenuStore } from '@/store/modules/menu';
 import { usePlayerStore } from '@/store/modules/player';
 import { useSettingsStore } from '@/store/modules/settings';
 import { isElectron } from '@/utils';
+
+// 关键布局组件同步导入（始终可见，避免加载闪烁）
+import AppMenu from './components/AppMenu.vue';
+import SearchBar from './components/SearchBar.vue';
+import TitleBar from './components/TitleBar.vue';
+// 移动端专用布局
+import MobileLayout from './MobileLayout.vue';
 
 const keepAliveInclude = computed(() => {
   const allRoutes = [...homeRouter, ...otherRouter];
@@ -91,11 +91,9 @@ const keepAliveInclude = computed(() => {
     .filter(Boolean);
 });
 
-const AppMenu = defineAsyncComponent(() => import('./components/AppMenu.vue'));
+// 非关键组件保持异步加载
 const PlayBar = defineAsyncComponent(() => import('@/components/player/PlayBar.vue'));
 const MobilePlayBar = defineAsyncComponent(() => import('@/components/player/MobilePlayBar.vue'));
-const SearchBar = defineAsyncComponent(() => import('./components/SearchBar.vue'));
-const TitleBar = defineAsyncComponent(() => import('./components/TitleBar.vue'));
 const PlayingListDrawer = defineAsyncComponent(
   () => import('@/components/player/PlayingListDrawer.vue')
 );
@@ -117,6 +115,9 @@ const shouldShowMobileMenu = computed(() => {
 });
 
 provide('shouldShowMobileMenu', shouldShowMobileMenu);
+
+// 使用 settingsStore.isMobile 进行移动端检测而不是 Capacitor 设备检测
+const isPhone = computed(() => settingsStore.isMobile);
 
 onMounted(() => {
   settingsStore.initializeSettings();
@@ -144,7 +145,7 @@ provide('openPlaylistDrawer', openPlaylistDrawer);
 }
 
 .layout-main {
-  @apply w-full h-full relative  text-gray-900 dark:text-white;
+  @apply w-full h-full relative text-gray-900 dark:text-white;
 }
 
 .layout-main-page {
@@ -152,7 +153,7 @@ provide('openPlaylistDrawer', openPlaylistDrawer);
 }
 
 .menu {
-  @apply h-full;
+  @apply h-full bg-light dark:bg-black;
 }
 
 .main {
@@ -173,10 +174,12 @@ provide('openPlaylistDrawer', openPlaylistDrawer);
     overflow: auto;
     display: block;
     flex: none;
+    position: relative;
   }
 
   .mobile-content {
     height: calc(100vh - 75px);
+    position: relative;
   }
 }
 </style>

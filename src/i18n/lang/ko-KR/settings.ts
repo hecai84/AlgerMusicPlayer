@@ -10,7 +10,7 @@ export default {
     network: '네트워크 설정',
     system: '시스템 관리',
     donation: '후원 지원',
-    regard: '정보'
+    about: '정보'
   },
   basic: {
     themeMode: '테마 모드',
@@ -87,6 +87,10 @@ export default {
     gdmusicInfo: 'GD 뮤직은 여러 플랫폼 음원을 자동으로 해석하고 최적의 결과를 자동 선택합니다',
     autoPlay: '자동 재생',
     autoPlayDesc: '앱을 다시 열 때 자동으로 재생을 계속할지 여부',
+    audioDevice: '오디오 출력 장치',
+    audioDeviceDesc: '스피커, 헤드폰 또는 블루투스 장치와 같은 오디오 출력 장치 선택',
+    testAudio: '테스트',
+    selectAudioDevice: '출력 장치 선택',
     showStatusBar: '상태바 제어 기능 표시 여부',
     showStatusBarContent: 'Mac 상태바에 음악 제어 기능을 표시할 수 있습니다 (재시작 후 적용)',
     fallbackParser: '대체 분석 서비스 (GD Music)',
@@ -99,9 +103,13 @@ export default {
     sourceLabels: {
       migu: 'Migu',
       kugou: 'Kugou',
+      kuwo: 'Kuwo',
       pyncmd: 'NetEase (내장)',
+      qq: 'QQ Music',
+      joox: 'JOOX',
       bilibili: 'Bilibili',
       gdmusic: 'GD Music',
+      lxMusic: 'LX Music',
       custom: '사용자 지정 API'
     },
 
@@ -112,7 +120,38 @@ export default {
       notImported: '아직 사용자 지정 음원을 가져오지 않았습니다.',
       importSuccess: '음원 가져오기 성공: {name}',
       importFailed: '가져오기 실패: {message}',
-      enableHint: '사용하려면 먼저 JSON 구성 파일을 가져오세요'
+      enableHint: '사용하려면 먼저 JSON 구성 파일을 가져오세요',
+      status: {
+        imported: '사용자 지정 음원 가져옴',
+        notImported: '가져오지 않음'
+      }
+    },
+    lxMusic: {
+      tabs: {
+        sources: '음원 선택',
+        lxMusic: '낙설 음원',
+        customApi: '사용자 정의 API'
+      },
+      scripts: {
+        title: '가져온 스크립트',
+        importLocal: '로컬 가져오기',
+        importOnline: '온라인 가져오기',
+        urlPlaceholder: '낙설 음원 스크립트 URL 입력',
+        importBtn: '가져오기',
+        empty: '가져온 낙설 음원이 없습니다',
+        notConfigured: '설정되지 않음 (낙설 음원 탭에서 설정하세요)',
+        importHint: '소스 확장을 위해 호환되는 사용자 정의 API 플러그인을 가져옵니다',
+        noScriptWarning: '먼저 낙설 음원 스크립트를 가져오세요',
+        noSelectionWarning: '먼저 낙설 음원 소스를 선택하세요',
+        notFound: '음원이 존재하지 않습니다',
+        switched: '음원으로 전환되었습니다: {name}',
+        deleted: '음원이 삭제되었습니다: {name}',
+        enterUrl: '스크립트 URL을 입력하세요',
+        invalidUrl: '유효하지 않은 URL 형식',
+        invalidScript: '유효하지 않은 낙설 음원 스크립트입니다 (globalThis.lx 코드를 찾을 수 없음)',
+        nameRequired: '이름은 비워둘 수 없습니다',
+        renameSuccess: '이름이 변경되었습니다'
+      }
     }
   },
   application: {
@@ -157,6 +196,36 @@ export default {
   system: {
     cache: '캐시 관리',
     cacheDesc: '캐시 지우기',
+    diskCache: '디스크 캐시',
+    diskCacheDesc: '재생한 음악과 가사를 로컬 디스크에 캐시하여 재생 속도를 높입니다',
+    cacheDirectory: '캐시 디렉터리',
+    cacheDirectoryDesc: '음악 및 가사 캐시 저장 경로를 사용자 지정',
+    selectDirectory: '디렉터리 선택',
+    openDirectory: '디렉터리 열기',
+    cacheMaxSize: '캐시 용량 제한',
+    cacheMaxSizeDesc: '용량 제한 도달 시 오래된 캐시를 자동 정리합니다',
+    cleanupPolicy: '정리 정책',
+    cleanupPolicyDesc: '캐시 용량 제한 도달 시 적용할 자동 정리 규칙',
+    cleanupPolicyOptions: {
+      lru: '최근 사용 안 함 우선',
+      fifo: '선입선출'
+    },
+    cacheStatus: '캐시 상태',
+    cacheStatusDesc: '사용량 {used} / 제한 {limit}',
+    cacheStatusDetail: '음악 {musicCount}곡, 가사 {lyricCount}곡',
+    manageDiskCache: '수동 디스크 캐시 정리',
+    manageDiskCacheDesc: '캐시 유형별로 정리',
+    clearMusicCache: '음악 캐시 정리',
+    clearLyricCache: '가사 캐시 정리',
+    clearAllCache: '전체 캐시 정리',
+    switchDirectoryMigrateTitle: '기존 캐시가 감지되었습니다',
+    switchDirectoryMigrateContent: '기존 캐시를 새 디렉터리로 마이그레이션할까요?',
+    switchDirectoryMigrateConfirm: '마이그레이션',
+    switchDirectoryDestroyTitle: '기존 캐시 삭제',
+    switchDirectoryDestroyContent:
+      '마이그레이션하지 않을 경우, 이전 디렉터리의 캐시 파일을 삭제할까요?',
+    switchDirectoryDestroyConfirm: '삭제',
+    switchDirectoryKeepOld: '기존 캐시 유지',
     cacheClearTitle: '지울 캐시 유형을 선택하세요：',
     cacheTypes: {
       history: {
@@ -191,7 +260,14 @@ export default {
     restart: '재시작',
     restartDesc: '앱 재시작',
     messages: {
-      clearSuccess: '지우기 성공, 일부 설정은 재시작 후 적용됩니다'
+      clearSuccess: '지우기 성공, 일부 설정은 재시작 후 적용됩니다',
+      diskCacheClearSuccess: '디스크 캐시를 정리했습니다',
+      diskCacheClearFailed: '디스크 캐시 정리에 실패했습니다',
+      diskCacheStatsLoadFailed: '캐시 상태를 불러오지 못했습니다',
+      switchDirectorySuccess: '캐시 디렉터리가 변경되었습니다. 기존 캐시는 유지됩니다',
+      switchDirectoryFailed: '캐시 디렉터리 변경에 실패했습니다',
+      switchDirectoryMigrated: '캐시 디렉터리를 변경하고 {count}개 파일을 마이그레이션했습니다',
+      switchDirectoryDestroyed: '캐시 디렉터리를 변경하고 기존 캐시 {count}개 파일을 삭제했습니다'
     }
   },
   about: {
@@ -201,6 +277,7 @@ export default {
     latest: '현재 최신 버전입니다',
     hasUpdate: '새 버전 발견',
     gotoUpdate: '업데이트하러 가기',
+    manualUpdate: '수동 업데이트',
     gotoGithub: 'Github로 이동',
     author: '작성자',
     authorDesc: 'algerkong 별점🌟 부탁드려요',
@@ -219,6 +296,7 @@ export default {
       display: '표시',
       interface: '인터페이스',
       typography: '텍스트',
+      background: '배경',
       mobile: '모바일'
     },
     pureMode: '순수 모드',
@@ -241,6 +319,12 @@ export default {
       medium: '중간',
       large: '큼'
     },
+    fontWeight: '글꼴 두께',
+    fontWeightMarks: {
+      thin: '가늘게',
+      normal: '보통',
+      bold: '굵게'
+    },
     letterSpacing: '글자 간격',
     letterSpacingMarks: {
       compact: '좁음',
@@ -253,6 +337,7 @@ export default {
       default: '기본',
       loose: '넓음'
     },
+    contentWidth: '콘텐츠 너비',
     mobileLayout: '모바일 레이아웃',
     layoutOptions: {
       default: '기본',
@@ -266,7 +351,46 @@ export default {
       full: '전체화면'
     },
     lyricLines: '가사 줄 수',
-    mobileUnavailable: '이 설정은 모바일에서만 사용 가능합니다'
+    mobileUnavailable: '이 설정은 모바일에서만 사용 가능합니다',
+    // 배경 설정
+    background: {
+      useCustomBackground: '사용자 정의 배경 사용',
+      backgroundMode: '배경 모드',
+      modeOptions: {
+        solid: '단색',
+        gradient: '그라데이션',
+        image: '이미지',
+        css: 'CSS'
+      },
+      solidColor: '색상 선택',
+      presetColors: '프리셋 색상',
+      customColor: '사용자 정의 색상',
+      gradientEditor: '그라데이션 편집기',
+      gradientColors: '그라데이션 색상',
+      gradientDirection: '그라데이션 방향',
+      directionOptions: {
+        toBottom: '위에서 아래로',
+        toRight: '왼쪽에서 오른쪽으로',
+        toBottomRight: '왼쪽 위에서 오른쪽 아래로',
+        angle45: '45도',
+        toTop: '아래에서 위로',
+        toLeft: '오른쪽에서 왼쪽으로'
+      },
+      addColor: '색상 추가',
+      removeColor: '색상 제거',
+      imageUpload: '이미지 업로드',
+      imagePreview: '이미지 미리보기',
+      clearImage: '이미지 지우기',
+      imageBlur: '흐림',
+      imageBrightness: '밝기',
+      customCss: '사용자 정의 CSS 스타일',
+      customCssPlaceholder: 'CSS 스타일 입력, 예: background: linear-gradient(...)',
+      customCssHelp: '모든 CSS background 속성 지원',
+      reset: '기본값으로 재설정',
+      fileSizeLimit: '이미지 크기 제한: 20MB',
+      invalidImageFormat: '잘못된 이미지 형식',
+      imageTooLarge: '이미지가 너무 큽니다. 20MB 미만의 이미지를 선택하세요'
+    }
   },
   translationEngine: '가사 번역 엔진',
   translationEngineOptions: {
@@ -297,28 +421,61 @@ export default {
     title: '단축키 설정',
     shortcut: '단축키',
     shortcutDesc: '단축키 사용자 정의',
+    summaryReady: '단축키 구성이 저장 가능한 상태입니다',
+    summaryRecording: '새 단축키 조합을 입력 중입니다',
+    summaryBlocked: '충돌 또는 잘못된 항목을 먼저 수정하세요',
+    platformHintMac: 'macOS에서는 CommandOrControl이 Cmd로 표시됩니다',
+    platformHintWindows: 'Windows에서는 CommandOrControl이 Ctrl로 표시됩니다',
+    platformHintLinux: 'Linux에서는 CommandOrControl이 Ctrl로 표시됩니다',
+    platformHintGeneric: 'CommandOrControl은 운영체제에 맞게 자동 변환됩니다',
+    enabledCount: '활성화됨',
+    recordingTip: '필드를 클릭 후 조합키 입력, Esc 취소, Delete 비활성화',
     shortcutConflict: '단축키 충돌',
     inputPlaceholder: '클릭하여 단축키 입력',
+    clickToRecord: '클릭 후 단축키 입력',
+    recording: '입력 중...',
     resetShortcuts: '기본값 복원',
+    restoreSingle: '복원',
     disableAll: '모두 비활성화',
     enableAll: '모두 활성화',
+    groups: {
+      playback: '재생 제어',
+      sound: '볼륨 및 즐겨찾기',
+      window: '창 제어'
+    },
     togglePlay: '재생/일시정지',
+    togglePlayDesc: '현재 재생 상태를 전환합니다',
     prevPlay: '이전 곡',
+    prevPlayDesc: '이전 곡으로 이동합니다',
     nextPlay: '다음 곡',
+    nextPlayDesc: '다음 곡으로 이동합니다',
     volumeUp: '볼륨 증가',
+    volumeUpDesc: '플레이어 볼륨을 높입니다',
     volumeDown: '볼륨 감소',
+    volumeDownDesc: '플레이어 볼륨을 낮춥니다',
     toggleFavorite: '즐겨찾기/즐겨찾기 취소',
+    toggleFavoriteDesc: '현재 곡 즐겨찾기를 전환합니다',
     toggleWindow: '창 표시/숨기기',
+    toggleWindowDesc: '메인 창을 빠르게 표시/숨김합니다',
     scopeGlobal: '전역',
     scopeApp: '앱 내',
     enabled: '활성화',
     disabled: '비활성화',
+    issueInvalid: '잘못된 조합',
+    issueReserved: '시스템 예약',
+    registrationWarningTitle: '다음 단축키는 등록되지 않았습니다',
+    registrationOccupied: '시스템 또는 다른 앱에서 사용 중',
+    registrationInvalid: '단축키 형식이 잘못됨',
     messages: {
       resetSuccess: '기본 단축키로 복원되었습니다. 저장을 잊지 마세요',
       conflict: '충돌하는 단축키가 있습니다. 다시 설정하세요',
       saveSuccess: '단축키 설정이 저장되었습니다',
       saveError: '단축키 저장 실패, 다시 시도하세요',
+      saveValidationError: '단축키 검증에 실패했습니다. 설정을 확인하세요',
+      partialRegistered: '저장되었지만 일부 전역 단축키는 등록되지 않았습니다',
       cancelEdit: '수정이 취소되었습니다',
+      clearToDisable: '해당 단축키가 비활성화되었습니다',
+      invalidShortcut: '잘못된 단축키입니다. 유효한 조합을 입력하세요',
       disableAll: '모든 단축키가 비활성화되었습니다. 저장을 잊지 마세요',
       enableAll: '모든 단축키가 활성화되었습니다. 저장을 잊지 마세요'
     }

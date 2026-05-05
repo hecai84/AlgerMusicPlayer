@@ -11,7 +11,8 @@ export default {
   },
   loading: {
     more: 'Loading...',
-    failed: 'Search failed'
+    failed: 'Search failed',
+    searching: 'Searching...'
   },
   noMore: 'No more results',
   error: {
@@ -22,6 +23,10 @@ export default {
     album: 'Album',
     playlist: 'Playlist',
     mv: 'MV',
+    djradio: 'Podcast',
     bilibili: 'Bilibili'
-  }
+  },
+  history: 'Search History',
+  hot: 'Hot Searches',
+  suggestions: 'Search Suggestions'
 };

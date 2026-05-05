@@ -1,14 +1,15 @@
 import { cloneDeep } from 'lodash';
 
 import { musicDB } from '@/hooks/MusicHook';
+import { SongSourceConfigManager } from '@/services/SongSourceConfigManager';
 import { useSettingsStore } from '@/store';
 import type { SongResult } from '@/types/music';
 import { isElectron } from '@/utils';
 import requestMusic from '@/utils/request_music';
 
-import { searchAndGetBilibiliAudioUrl } from './bilibili';
 import type { ParsedMusicResult } from './gdmusic';
 import { parseFromGDMusic } from './gdmusic';
+import { LxMusicStrategy } from './lxMusicStrategy';
 import { parseFromCustomApi } from './parseFromCustomApi';
 
 const { saveData, getData, deleteData } = musicDB;
@@ -33,12 +34,17 @@ export interface MusicParseResult {
 const CACHE_CONFIG = {
   // 音乐URL缓存时间：30分钟
   MUSIC_URL_CACHE_TIME: 30 * 60 * 1000,
-  // 失败缓存时间：5分钟
-  FAILED_CACHE_TIME: 5 * 60 * 1000,
+  // 失败缓存时间：1分钟（减少到 1 分钟以便更快恢复）
+  FAILED_CACHE_TIME: 1 * 60 * 1000,
   // 重试配置
   MAX_RETRY_COUNT: 2,
   RETRY_DELAY: 1000
 };
+
+/**
+ * 内存失败缓存（替代 IndexedDB，更轻量且应用重启后自动失效）
+ */
+const failedCacheMap = new Map<string, number>();
 
 /**
  * 缓存管理器
@@ -104,39 +110,46 @@ export class CacheManager {
   }
 
   /**
-   * 检查是否在失败缓存期内
+   * 检查是否在失败缓存期内（使用内存缓存）
    */
-  static async isInFailedCache(id: number, strategyName: string): Promise<boolean> {
-    try {
-      const cacheKey = `${id}_${strategyName}`;
-      const cached = await getData('music_failed_cache', cacheKey);
-      if (cached?.createTime && Date.now() - cached.createTime < CACHE_CONFIG.FAILED_CACHE_TIME) {
-        console.log(`策略 ${strategyName} 在失败缓存期内，跳过`);
-        return true;
-      }
-      // 清理过期缓存
-      if (cached) {
-        await deleteData('music_failed_cache', cacheKey);
-      }
-    } catch (error) {
-      console.warn('检查失败缓存失败:', error);
+  static isInFailedCache(id: number, strategyName: string): boolean {
+    const cacheKey = `${id}_${strategyName}`;
+    const cachedTime = failedCacheMap.get(cacheKey);
+    if (cachedTime && Date.now() - cachedTime < CACHE_CONFIG.FAILED_CACHE_TIME) {
+      console.log(`策略 ${strategyName} 在失败缓存期内，跳过`);
+      return true;
+    }
+    // 清理过期缓存
+    if (cachedTime) {
+      failedCacheMap.delete(cacheKey);
     }
     return false;
   }
 
   /**
-   * 添加失败缓存
+   * 添加失败缓存（使用内存缓存）
    */
-  static async addFailedCache(id: number, strategyName: string): Promise<void> {
-    try {
-      const cacheKey = `${id}_${strategyName}`;
-      await saveData('music_failed_cache', {
-        id: cacheKey,
-        createTime: Date.now()
-      });
-      console.log(`添加失败缓存成功: ${strategyName}`);
-    } catch (error) {
-      console.error('添加失败缓存失败:', error);
+  static addFailedCache(id: number, strategyName: string): void {
+    const cacheKey = `${id}_${strategyName}`;
+    failedCacheMap.set(cacheKey, Date.now());
+    console.log(
+      `添加失败缓存成功: ${strategyName} (缓存时间: ${CACHE_CONFIG.FAILED_CACHE_TIME / 1000}秒)`
+    );
+  }
+
+  /**
+   * 清除指定歌曲的失败缓存
+   */
+  static clearFailedCache(id: number): void {
+    const keysToDelete: string[] = [];
+    failedCacheMap.forEach((_, key) => {
+      if (key.startsWith(`${id}_`)) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach((key) => failedCacheMap.delete(key));
+    if (keysToDelete.length > 0) {
+      console.log(`清除歌曲 ${id} 的失败缓存: ${keysToDelete.length} 项`);
     }
   }
 
@@ -150,7 +163,7 @@ export class CacheManager {
       console.log(`清除歌曲 ${id} 的URL缓存`);
 
       // 清除失败缓存 - 需要遍历所有策略
-      const strategies = ['custom', 'bilibili', 'gdmusic', 'unblockMusic'];
+      const strategies = ['custom', 'gdmusic', 'unblockMusic'];
       for (const strategy of strategies) {
         const cacheKey = `${id}_${strategy}`;
         try {
@@ -196,30 +209,6 @@ class RetryHelper {
     throw lastError!;
   }
 }
-
-/**
- * 从Bilibili获取音频URL
- * @param data 歌曲数据
- * @returns 解析结果
- */
-const getBilibiliAudio = async (data: SongResult) => {
-  const songName = data?.name || '';
-  const artistName =
-    Array.isArray(data?.ar) && data.ar.length > 0 && data.ar[0]?.name ? data.ar[0].name : '';
-  const albumName = data?.al && typeof data.al === 'object' && data.al?.name ? data.al.name : '';
-
-  const searchQuery = [songName, artistName, albumName].filter(Boolean).join(' ').trim();
-  console.log('开始搜索bilibili音频:', searchQuery);
-
-  const url = await searchAndGetBilibiliAudioUrl(searchQuery);
-  return {
-    data: {
-      code: 200,
-      message: 'success',
-      data: { url }
-    }
-  };
-};
 
 /**
  * 从GD音乐台获取音频URL
@@ -322,7 +311,7 @@ class CustomApiStrategy implements MusicSourceStrategy {
 
   async parse(id: number, data: SongResult, quality = 'higher'): Promise<MusicParseResult | null> {
     // 检查失败缓存
-    if (await CacheManager.isInFailedCache(id, this.name)) {
+    if (CacheManager.isInFailedCache(id, this.name)) {
       return null;
     }
 
@@ -339,51 +328,11 @@ class CustomApiStrategy implements MusicSourceStrategy {
       }
 
       // 解析失败，添加失败缓存
-      await CacheManager.addFailedCache(id, this.name);
+      CacheManager.addFailedCache(id, this.name);
       return null;
     } catch (error) {
       console.error('自定义API解析失败:', error);
-      await CacheManager.addFailedCache(id, this.name);
-      return null;
-    }
-  }
-}
-
-/**
- * Bilibili解析策略
- */
-class BilibiliStrategy implements MusicSourceStrategy {
-  name = 'bilibili';
-  priority = 2;
-
-  canHandle(sources: string[]): boolean {
-    return sources.includes('bilibili');
-  }
-
-  async parse(id: number, data: SongResult): Promise<MusicParseResult | null> {
-    // 检查失败缓存
-    if (await CacheManager.isInFailedCache(id, this.name)) {
-      return null;
-    }
-
-    try {
-      console.log('尝试使用Bilibili解析...');
-      const result = await RetryHelper.withRetry(async () => {
-        return await getBilibiliAudio(data);
-      });
-
-      const adaptedResult = adaptParseResult(result);
-      if (adaptedResult?.data?.data?.url) {
-        console.log('Bilibili解析成功');
-        return adaptedResult;
-      }
-
-      // 解析失败，添加失败缓存
-      await CacheManager.addFailedCache(id, this.name);
-      return null;
-    } catch (error) {
-      console.error('Bilibili解析失败:', error);
-      await CacheManager.addFailedCache(id, this.name);
+      CacheManager.addFailedCache(id, this.name);
       return null;
     }
   }
@@ -402,7 +351,7 @@ class GDMusicStrategy implements MusicSourceStrategy {
 
   async parse(id: number, data: SongResult): Promise<MusicParseResult | null> {
     // 检查失败缓存
-    if (await CacheManager.isInFailedCache(id, this.name)) {
+    if (CacheManager.isInFailedCache(id, this.name)) {
       return null;
     }
 
@@ -419,11 +368,11 @@ class GDMusicStrategy implements MusicSourceStrategy {
       }
 
       // 解析失败，添加失败缓存
-      await CacheManager.addFailedCache(id, this.name);
+      CacheManager.addFailedCache(id, this.name);
       return null;
     } catch (error) {
       console.error('GD音乐台解析失败:', error);
-      await CacheManager.addFailedCache(id, this.name);
+      CacheManager.addFailedCache(id, this.name);
       return null;
     }
   }
@@ -437,9 +386,7 @@ class UnblockMusicStrategy implements MusicSourceStrategy {
   priority = 4;
 
   canHandle(sources: string[]): boolean {
-    const unblockSources = sources.filter(
-      (source) => !['custom', 'bilibili', 'gdmusic'].includes(source)
-    );
+    const unblockSources = sources.filter((source) => !['custom', 'gdmusic'].includes(source));
     return unblockSources.length > 0;
   }
 
@@ -450,13 +397,13 @@ class UnblockMusicStrategy implements MusicSourceStrategy {
     sources?: string[]
   ): Promise<MusicParseResult | null> {
     // 检查失败缓存
-    if (await CacheManager.isInFailedCache(id, this.name)) {
+    if (CacheManager.isInFailedCache(id, this.name)) {
       return null;
     }
 
     try {
       const unblockSources = (sources || []).filter(
-        (source) => !['custom', 'bilibili', 'gdmusic'].includes(source)
+        (source) => !['custom', 'gdmusic'].includes(source)
       );
       console.log('尝试使用UnblockMusic解析:', unblockSources);
 
@@ -471,11 +418,11 @@ class UnblockMusicStrategy implements MusicSourceStrategy {
       }
 
       // 解析失败，添加失败缓存
-      await CacheManager.addFailedCache(id, this.name);
+      CacheManager.addFailedCache(id, this.name);
       return null;
     } catch (error) {
       console.error('UnblockMusic解析失败:', error);
-      await CacheManager.addFailedCache(id, this.name);
+      CacheManager.addFailedCache(id, this.name);
       return null;
     }
   }
@@ -486,8 +433,8 @@ class UnblockMusicStrategy implements MusicSourceStrategy {
  */
 class MusicSourceStrategyFactory {
   private static strategies: MusicSourceStrategy[] = [
+    new LxMusicStrategy(),
     new CustomApiStrategy(),
-    new BilibiliStrategy(),
     new GDMusicStrategy(),
     new UnblockMusicStrategy()
   ];
@@ -512,23 +459,15 @@ class MusicSourceStrategyFactory {
  * @returns 音源列表和音质设置
  */
 const getMusicConfig = (id: number, settingsStore?: any) => {
-  const songId = String(id);
   let musicSources: string[] = [];
   let quality = 'higher';
 
   try {
-    // 尝试获取歌曲自定义音源
-    const savedSourceStr = localStorage.getItem(`song_source_${songId}`);
-    if (savedSourceStr) {
-      try {
-        const customSources = JSON.parse(savedSourceStr);
-        if (Array.isArray(customSources)) {
-          musicSources = customSources;
-          console.log(`使用歌曲 ${id} 自定义音源:`, musicSources);
-        }
-      } catch (error) {
-        console.error('解析自定义音源设置失败:', error);
-      }
+    // 尝试获取歌曲自定义音源（使用 SongSourceConfigManager）
+    const songConfig = SongSourceConfigManager.getConfig(id);
+    if (songConfig && songConfig.sources.length > 0) {
+      musicSources = songConfig.sources;
+      console.log(`使用歌曲 ${id} 自定义音源:`, musicSources);
     }
 
     // 如果没有自定义音源，使用全局设置

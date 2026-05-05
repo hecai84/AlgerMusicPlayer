@@ -4,14 +4,19 @@
       <!-- 顶部进度条和时间 -->
       <div class="top-section">
         <!-- 进度条 -->
-        <div class="progress-bar" @click="handleProgressClick">
+        <div
+          class="progress-bar"
+          :class="{ 'is-dragging': isDragging }"
+          @mousedown="handleProgressMouseDown"
+          @click.stop="handleProgressClick"
+        >
           <div class="progress-track"></div>
-          <div class="progress-fill" :style="{ width: `${(nowTime / allTime) * 100}%` }"></div>
+          <div class="progress-fill" :style="{ width: `${progressPercentage}%` }"></div>
         </div>
 
         <!-- 时间显示 -->
         <div class="time-display">
-          <span class="current-time">{{ formatTime(nowTime) }}</span>
+          <span class="current-time">{{ formatTime(displayTime) }}</span>
           <span class="total-time">{{ formatTime(allTime) }}</span>
         </div>
       </div>
@@ -20,7 +25,10 @@
       <div class="controls-section">
         <div class="left-controls">
           <button class="control-btn small-btn" @click="togglePlayMode">
-            <i class="iconfont" :class="playModeIcon"></i>
+            <i
+              class="iconfont"
+              :class="[playModeIcon, { 'intelligence-active': playMode === 3 }]"
+            ></i>
           </button>
         </div>
 
@@ -72,10 +80,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 
-import { allTime, nowTime, playMusic } from '@/hooks/MusicHook';
+import { allTime, nowTime } from '@/hooks/MusicHook';
+import { usePlaybackControl } from '@/hooks/usePlaybackControl';
+import { usePlayMode } from '@/hooks/usePlayMode';
+import { useVolumeControl } from '@/hooks/useVolumeControl';
 import { audioService } from '@/services/audioService';
 import { usePlayerStore } from '@/store/modules/player';
-import { useSettingsStore } from '@/store/modules/settings';
 import { secondToMinute } from '@/utils';
 
 const props = withDefaults(
@@ -88,88 +98,93 @@ const props = withDefaults(
 );
 
 const playerStore = usePlayerStore();
-const settingsStore = useSettingsStore();
 const playBarRef = ref<HTMLElement | null>(null);
 
-// 播放状态
-const play = computed(() => playerStore.isPlay);
+// 播放控制
+const { isPlaying: play, playMusicEvent, handleNext, handlePrev } = usePlaybackControl();
 
 // 播放模式
-const playMode = computed(() => playerStore.playMode);
-const playModeIcon = computed(() => {
-  switch (playMode.value) {
-    case 0:
-      return 'ri-repeat-2-line';
-    case 1:
-      return 'ri-repeat-one-line';
-    case 2:
-      return 'ri-shuffle-line';
-    default:
-      return 'ri-repeat-2-line';
-  }
-});
+const { playMode, playModeIcon, togglePlayMode } = usePlayMode();
 
-// 切换播放模式
-const togglePlayMode = () => {
-  playerStore.togglePlayMode();
-};
-
-// 音量控制
-const audioVolume = ref(
-  localStorage.getItem('volume') ? parseFloat(localStorage.getItem('volume') as string) : 1
-);
-
-const volumeSlider = computed({
-  get: () => audioVolume.value * 100,
-  set: (value) => {
-    localStorage.setItem('volume', (value / 100).toString());
-    audioService.setVolume(value / 100);
-    audioVolume.value = value / 100;
-  }
-});
-
-// 音量图标
-const getVolumeIcon = computed(() => {
-  if (audioVolume.value === 0) return 'ri-volume-mute-line';
-  if (audioVolume.value <= 0.5) return 'ri-volume-down-line';
-  return 'ri-volume-up-line';
-});
-
-// 静音切换
-const mute = () => {
-  if (volumeSlider.value === 0) {
-    volumeSlider.value = 30;
-  } else {
-    volumeSlider.value = 0;
-  }
-};
-
-// 鼠标滚轮调整音量
-const handleVolumeWheel = (e: WheelEvent) => {
-  const delta = e.deltaY < 0 ? 5 : -5;
-  const newValue = Math.min(Math.max(volumeSlider.value + delta, 0), 100);
-  volumeSlider.value = newValue;
-};
-
-// 播放控制
-const handlePrev = () => playerStore.prevPlay();
-const handleNext = () => playerStore.nextPlay();
-
-const playMusicEvent = async () => {
-  try {
-    await playerStore.setPlay({ ...playMusic.value });
-  } catch (error) {
-    console.error('播放出错:', error);
-    playerStore.nextPlay();
-  }
-};
+// 音量控制（统一通过 playerStore 管理）
+const { volumeSlider, volumeIcon: getVolumeIcon, mute, handleVolumeWheel } = useVolumeControl();
 
 // 进度条控制
+const isDragging = ref(false);
+const dragProgress = ref(0); // 拖拽时的预览进度 (0-100)
+
+// 计算当前显示的进度百分比
+const progressPercentage = computed(() => {
+  if (isDragging.value) {
+    return dragProgress.value;
+  }
+  if (allTime.value === 0) return 0;
+  return (nowTime.value / allTime.value) * 100;
+});
+
+// 计算显示的时间
+const displayTime = computed(() => {
+  if (isDragging.value) {
+    return (dragProgress.value / 100) * allTime.value;
+  }
+  return nowTime.value;
+});
+
+// 计算进度百分比的辅助函数
+const calculateProgress = (clientX: number, element: HTMLElement): number => {
+  const rect = element.getBoundingClientRect();
+  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  return percent * 100;
+};
+
+// 更新音频进度
+const seekToProgress = (percentage: number) => {
+  const targetTime = (percentage / 100) * allTime.value;
+  audioService.seek(targetTime);
+  // 不立即更新 nowTime,让音频服务的回调来更新,避免不同步
+};
+
+// 鼠标按下开始拖拽
+const handleProgressMouseDown = (e: MouseEvent) => {
+  if (e.button !== 0) return; // 只响应左键
+
+  const target = e.currentTarget as HTMLElement;
+  isDragging.value = true;
+  dragProgress.value = calculateProgress(e.clientX, target);
+
+  // 添加全局鼠标移动和释放监听
+  const handleMouseMove = (moveEvent: MouseEvent) => {
+    if (isDragging.value) {
+      dragProgress.value = calculateProgress(moveEvent.clientX, target);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging.value) {
+      // 拖拽结束,执行跳转
+      seekToProgress(dragProgress.value);
+      isDragging.value = false;
+    }
+    // 移除事件监听
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+
+  // 防止文本选择
+  e.preventDefault();
+};
+
+// 点击进度条跳转
 const handleProgressClick = (e: MouseEvent) => {
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-  const percent = (e.clientX - rect.left) / rect.width;
-  audioService.seek(allTime.value * percent);
-  nowTime.value = allTime.value * percent;
+  // 如果正在拖拽,不处理点击事件
+  if (isDragging.value) return;
+
+  const target = e.currentTarget as HTMLElement;
+  const percentage = calculateProgress(e.clientX, target);
+  seekToProgress(percentage);
 };
 
 // 格式化时间
@@ -183,7 +198,7 @@ const openPlayListDrawer = () => {
 };
 
 // 深色模式
-const isDarkMode = computed(() => settingsStore.theme === 'dark' || props.isDark);
+const isDarkMode = computed(() => props.isDark);
 
 // 主题颜色应用函数
 const applyThemeColor = (colorValue: string) => {
@@ -363,6 +378,7 @@ onMounted(() => {
 
   .progress-bar {
     @apply relative cursor-pointer h-2 mb-2 w-full;
+    user-select: none;
 
     .progress-track {
       @apply absolute inset-0 rounded-full transition-all duration-150;
@@ -378,10 +394,6 @@ onMounted(() => {
     &:hover {
       .progress-track {
         background-color: var(--track-color-hover);
-      }
-      .progress-track,
-      .progress-fill {
-        @apply h-full;
       }
 
       .progress-fill {
@@ -528,5 +540,9 @@ onMounted(() => {
 .like-active {
   color: var(--fill-color);
   text-shadow: 0 0 8px var(--fill-color-transparent);
+}
+
+.intelligence-active {
+  @apply text-green-500;
 }
 </style>

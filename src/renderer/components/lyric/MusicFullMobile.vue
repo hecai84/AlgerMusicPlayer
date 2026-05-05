@@ -21,12 +21,37 @@
         <i class="ri-loader-4-line loading-icon"></i>
       </div>
       <div
-        class="control-btn absolute top-5 left-5"
+        class="control-btn absolute left-5"
         :class="{ 'pure-mode': config.pureModeEnabled }"
         @click="closeMusicFull"
       >
         <i class="ri-arrow-down-s-line"></i>
       </div>
+
+      <!-- 右上角设置按钮 -->
+      <div
+        class="control-btn absolute right-5 flex items-center gap-2"
+        :class="[
+          { 'pure-mode': config.pureModeEnabled },
+          hasSleepTimerActive ? '!w-auto !px-2' : ''
+        ]"
+      >
+        <!-- 定时器倒计时显示 -->
+        <div
+          v-if="hasSleepTimerActive"
+          class="flex items-center gap-1 px-2 py-1 rounded-full bg-black/30 backdrop-blur-sm text-xs text-white/90"
+          @click="showPlayerSettings = true"
+        >
+          <i class="ri-timer-line text-green-400"></i>
+          <span class="font-medium tabular-nums">{{ sleepTimerDisplayText }}</span>
+        </div>
+        <div @click="showPlayerSettings = true">
+          <i class="ri-more-2-fill"></i>
+        </div>
+      </div>
+
+      <!-- 播放设置弹窗 -->
+      <mobile-player-settings v-model:visible="showPlayerSettings" />
 
       <!-- 全屏歌词页面 - 竖屏模式下 -->
       <transition name="fade">
@@ -343,7 +368,7 @@
             <i class="ri-arrow-down-s-line"></i>
           </div>
           <div class="side-button" @click="togglePlayMode">
-            <i :class="playModeIcon"></i>
+            <i :class="[playModeIcon, { 'intelligence-active': playMode === 3 }]"></i>
           </div>
           <div class="main-button prev" @click="prevSong">
             <i class="ri-skip-back-fill"></i>
@@ -368,6 +393,7 @@ import { useWindowSize } from '@vueuse/core';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import MobilePlayerSettings from '@/components/player/MobilePlayerSettings.vue';
 import {
   allTime,
   artistList,
@@ -382,6 +408,8 @@ import {
   useLyricProgress
 } from '@/hooks/MusicHook';
 import { useArtist } from '@/hooks/useArtist';
+import { usePlayMode } from '@/hooks/usePlayMode';
+import { audioService } from '@/services/audioService';
 import { usePlayerStore } from '@/store/modules/player';
 import { DEFAULT_LYRIC_CONFIG, LyricConfig } from '@/types/lyric';
 import { getImgUrl, secondToMinute } from '@/utils';
@@ -394,19 +422,58 @@ const playerStore = usePlayerStore();
 // 播放控制相关
 const play = computed(() => playerStore.isPlay);
 const playIcon = computed(() => (play.value ? 'ri-pause-fill' : 'ri-play-fill'));
-const playMode = computed(() => playerStore.playMode);
-const playModeIcon = computed(() => {
-  switch (playMode.value) {
-    case 0:
-      return 'ri-repeat-line';
-    case 1:
-      return 'ri-repeat-one-line';
-    case 2:
-      return 'ri-shuffle-line';
-    default:
-      return 'ri-repeat-line';
+
+// 播放设置弹窗
+const showPlayerSettings = ref(false);
+
+// 定时器相关
+const sleepTimerRefresh = ref(0);
+let sleepTimerInterval: ReturnType<typeof setInterval> | null = null;
+
+const hasSleepTimerActive = computed(() => playerStore.hasSleepTimerActive);
+
+const sleepTimerDisplayText = computed(() => {
+  void sleepTimerRefresh.value; // 触发响应式更新
+
+  const timer = playerStore.sleepTimer;
+  if (timer.type === 'time' && timer.endTime) {
+    const remaining = Math.max(0, timer.endTime - Date.now());
+    const totalSeconds = Math.floor(remaining / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
+  if (timer.type === 'songs' && timer.remainingSongs) {
+    return `${timer.remainingSongs}首`;
+  }
+  if (timer.type === 'end') {
+    return '列表结束';
+  }
+  return '';
 });
+
+// 启动/停止定时器刷新
+watch(
+  hasSleepTimerActive,
+  (active) => {
+    if (active && playerStore.sleepTimer.type === 'time') {
+      if (!sleepTimerInterval) {
+        sleepTimerInterval = setInterval(() => {
+          sleepTimerRefresh.value = Date.now();
+        }, 1000);
+      }
+    } else {
+      if (sleepTimerInterval) {
+        clearInterval(sleepTimerInterval);
+        sleepTimerInterval = null;
+      }
+    }
+  },
+  { immediate: true }
+);
+
+// 播放模式
+const { playMode, playModeIcon, playModeText, togglePlayMode: togglePlayModeBase } = usePlayMode();
 // 打开播放列表
 const showPlaylist = () => {
   playerStore.setPlayListDrawerVisible(true);
@@ -453,8 +520,10 @@ watch(isLandscape, (newVal) => {
 });
 
 // 显示全屏歌词
+// 显示全屏歌词
 const showFullLyricScreen = () => {
   showFullLyrics.value = true;
+
   // 使用多次延迟尝试滚动，确保能够滚动到当前歌词
   nextTick(() => {
     scrollToCurrentLyric(true);
@@ -689,7 +758,7 @@ const handleProgressBarClick = (e: MouseEvent) => {
 
   console.log(`进度条点击: ${percentage.toFixed(2)}, 新时间: ${newTime.toFixed(2)}`);
 
-  sound.value.seek(newTime);
+  audioService.seek(newTime);
   nowTime.value = newTime;
 };
 
@@ -749,7 +818,7 @@ const handleMouseUp = (e: MouseEvent) => {
   e.preventDefault();
 
   // 释放时跳转到指定位置
-  sound.value.seek(nowTime.value);
+  audioService.seek(nowTime.value);
   console.log(`鼠标释放，跳转到: ${nowTime.value.toFixed(2)}秒`);
 
   isMouseDragging.value = false;
@@ -803,7 +872,7 @@ const handleThumbTouchEnd = (e: TouchEvent) => {
 
   // 拖动结束时执行seek操作
   console.log(`拖动结束，跳转到: ${nowTime.value.toFixed(2)}秒`);
-  sound.value.seek(nowTime.value);
+  audioService.seek(nowTime.value);
   isThumbDragging.value = false;
 };
 
@@ -911,14 +980,19 @@ const setTextColors = (background: string) => {
   }
 };
 
-// 监听背景变化
+const targetBackground = computed(() => {
+  if (config.value.theme !== 'default') {
+    return themeMusic[config.value.theme] || props.background;
+  }
+  return props.background;
+});
+
+// 监听目标背景变化并更新文字颜色
 watch(
-  () => props.background,
+  targetBackground,
   (newBg) => {
-    if (config.value.theme === 'default') {
+    if (newBg) {
       setTextColors(newBg);
-    } else {
-      setTextColors(themeMusic[config.value.theme] || props.background);
     }
   },
   { immediate: true }
@@ -963,28 +1037,14 @@ const prevSong = () => {
 };
 
 const togglePlayMode = () => {
-  playerStore.togglePlayMode();
-  showBottomToast(
-    [t('player.playMode.sequence'), t('player.playMode.loop'), t('player.playMode.random')][
-      playMode.value
-    ]
-  );
+  togglePlayModeBase();
+  showBottomToast(playModeText.value);
 };
 
 const closeMusicFull = () => {
   isVisible.value = false;
   playerStore.setMusicFull(false);
 };
-
-// 监听主题变化
-watch(
-  () => config.value.theme,
-  (newTheme) => {
-    const newBackground = themeMusic[newTheme] || props.background;
-    setTextColors(newBackground);
-  },
-  { immediate: true }
-);
 
 // 添加对 playMusic.id 的监听，歌曲切换时滚动到顶部
 watch(
@@ -1052,7 +1112,9 @@ onMounted(() => {
 watch(isVisible, (newVal) => {
   if (newVal) {
     // 播放器显示时，重新设置背景颜色
-    setTextColors(props.background);
+    if (targetBackground.value) {
+      setTextColors(targetBackground.value);
+    }
   } else {
     showFullLyrics.value = false;
     if (autoScrollTimer.value) {
@@ -1072,14 +1134,22 @@ const getLrcStyle = (index: number) => {
 
   if (index === nowIndex.value) {
     // 当前播放的歌词，使用渐变效果
+    // 只有原始样式包含 backgroundImage 时才设置 color: transparent
+    // 否则前奏阶段文字会因 transparent 而不可见
+    if (originalStyle.backgroundImage) {
+      return {
+        ...originalStyle,
+        backgroundImage: originalStyle.backgroundImage
+          .replace(/#ffffff/g, colors.active)
+          .replace(/#ffffff8a/g, `${colors.primary}`),
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        color: 'transparent'
+      };
+    }
+    // 当前行但播放时间未到（前奏/间奏），用高亮色显示
     return {
-      ...originalStyle,
-      backgroundImage: originalStyle.backgroundImage
-        ?.replace(/#ffffff/g, colors.active)
-        .replace(/#ffffff8a/g, `${colors.primary}`),
-      backgroundClip: 'text',
-      WebkitBackgroundClip: 'text',
-      color: 'transparent'
+      color: colors.active
     };
   }
 
@@ -1525,6 +1595,10 @@ const getWordStyle = (lineIndex: number, _wordIndex: number, word: any) => {
           i {
             @apply text-2xl;
             color: var(--text-color-primary);
+
+            &.intelligence-active {
+              @apply text-green-500;
+            }
           }
 
           &:hover {
@@ -1763,9 +1837,8 @@ const getWordStyle = (lineIndex: number, _wordIndex: number, word: any) => {
   }
 
   .fullscreen-header {
-    @apply pt-8 pb-4 px-6 flex flex-col items-center fixed top-0 left-0 w-full z-10;
+    @apply pt-16 pb-4 px-6 flex flex-col items-center fixed top-0 left-0 w-full z-10;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 100%);
-    height: 100px;
     pointer-events: auto;
 
     .song-title {
@@ -1826,6 +1899,7 @@ const getWordStyle = (lineIndex: number, _wordIndex: number, word: any) => {
   @apply w-9 h-9 flex items-center justify-center rounded cursor-pointer transition-all duration-300 z-[9999];
   background: rgba(142, 142, 142, 0.192);
   backdrop-filter: blur(12px);
+  top: calc(var(--safe-area-inset-top, 0) + 20px);
 
   i {
     @apply text-xl;

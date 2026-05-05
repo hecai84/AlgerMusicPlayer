@@ -14,6 +14,11 @@ export default {
   addCorrection: '提前 {num} 秒',
   subtractCorrection: '延迟 {num} 秒',
   playFailed: '当前歌曲播放失败，播放下一首',
+  parseFailedPlayNext: '歌曲解析失败，播放下一首',
+  consecutiveFailsError: '播放遇到错误，可能是网络波动或解析源失效，请切换播放列表或稍后重试',
+  playListEnded: '已播放到列表最后一首',
+  autoResumed: '已自动恢复播放',
+  resumeFailed: '恢复播放失败，请手动点击播放',
   playMode: {
     sequence: '顺序播放',
     loop: '单曲循环',
@@ -67,7 +72,17 @@ export default {
     unFavorite: '已取消收藏{name}',
     miniPlayBar: '迷你播放栏',
     playbackSpeed: '播放速度',
-    advancedControls: '更多设置s'
+    advancedControls: '更多设置',
+    intelligenceMode: {
+      title: '心动模式',
+      needCookieLogin: '请使用 Cookie 方式登录后使用心动模式',
+      noFavoritePlaylist: '未找到我喜欢的音乐歌单',
+      noLikedSongs: '您还没有喜欢的歌曲',
+      loading: '正在加载心动模式',
+      success: '已加载 {count} 首歌曲',
+      failed: '获取心动模式列表失败',
+      error: '心动模式播放出错'
+    }
   },
   eq: {
     title: '均衡器',
@@ -92,6 +107,11 @@ export default {
       acoustic: '原声',
       custom: '自定义'
     }
+  },
+  // 播放器设置
+  settings: {
+    title: '播放设置',
+    playbackSpeed: '播放速度'
   },
   // 定时关闭功能相关
   sleepTimer: {

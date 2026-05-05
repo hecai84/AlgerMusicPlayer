@@ -10,6 +10,65 @@ let isDragging = false;
 
 // 添加窗口大小变化防护
 let originalSize = { width: 0, height: 0 };
+// 鼠标位置轮询仅在"锁定 + 可见"时启用，解锁态下 DOM 事件已足够
+let mousePresenceTimer: ReturnType<typeof setInterval> | null = null;
+let lastMouseInside: boolean | null = null;
+let isLyricLocked = false;
+let isLyricWindowVisible = false;
+
+const isPointInsideWindow = (
+  point: { x: number; y: number },
+  bounds: { x: number; y: number; width: number; height: number }
+) => {
+  return (
+    point.x >= bounds.x &&
+    point.x < bounds.x + bounds.width &&
+    point.y >= bounds.y &&
+    point.y < bounds.y + bounds.height
+  );
+};
+
+const stopMousePresenceTracking = () => {
+  if (mousePresenceTimer) {
+    clearInterval(mousePresenceTimer);
+    mousePresenceTimer = null;
+  }
+  lastMouseInside = null;
+};
+
+const emitMousePresence = () => {
+  if (!lyricWindow || lyricWindow.isDestroyed()) return;
+
+  const mousePoint = screen.getCursorScreenPoint();
+  const bounds = lyricWindow.getBounds();
+  const isInside = isPointInsideWindow(mousePoint, bounds);
+
+  if (isInside === lastMouseInside) return;
+
+  lastMouseInside = isInside;
+  lyricWindow.webContents.send('lyric-mouse-presence', isInside);
+};
+
+const startMousePresenceTracking = () => {
+  if (mousePresenceTimer) return;
+
+  emitMousePresence();
+  mousePresenceTimer = setInterval(() => {
+    if (!lyricWindow || lyricWindow.isDestroyed()) {
+      stopMousePresenceTracking();
+      return;
+    }
+    emitMousePresence();
+  }, 50);
+};
+
+const syncMousePresenceTracking = () => {
+  if (isLyricLocked && isLyricWindowVisible && lyricWindow && !lyricWindow.isDestroyed()) {
+    startMousePresenceTracking();
+  } else {
+    stopMousePresenceTracking();
+  }
+};
 
 const createWin = () => {
   console.log('Creating lyric window');
@@ -102,10 +161,30 @@ const createWin = () => {
 
   // 监听窗口关闭事件
   lyricWindow.on('closed', () => {
+    stopMousePresenceTracking();
+    isLyricLocked = false;
+    isLyricWindowVisible = false;
     if (lyricWindow) {
       lyricWindow.destroy();
       lyricWindow = null;
     }
+  });
+
+  lyricWindow.on('show', () => {
+    isLyricWindowVisible = true;
+    syncMousePresenceTracking();
+  });
+  lyricWindow.on('hide', () => {
+    isLyricWindowVisible = false;
+    stopMousePresenceTracking();
+  });
+  lyricWindow.on('minimize', () => {
+    isLyricWindowVisible = false;
+    stopMousePresenceTracking();
+  });
+  lyricWindow.on('restore', () => {
+    isLyricWindowVisible = true;
+    syncMousePresenceTracking();
   });
 
   // 监听窗口大小变化事件，保存新的尺寸
@@ -172,6 +251,13 @@ export const loadLyricWindow = (ipcMain: IpcMain, mainWin: BrowserWindow): void 
     });
   });
 
+  // 歌词窗口 Vue 应用加载完成，通知主窗口发送完整歌词数据
+  ipcMain.on('lyric-ready', () => {
+    if (mainWin && !mainWin.isDestroyed()) {
+      mainWin.webContents.send('lyric-window-ready');
+    }
+  });
+
   ipcMain.on('send-lyric', (_, data) => {
     if (lyricWindow && !lyricWindow.isDestroyed()) {
       try {
@@ -196,6 +282,17 @@ export const loadLyricWindow = (ipcMain: IpcMain, mainWin: BrowserWindow): void 
       lyricWindow.destroy();
       lyricWindow = null;
     }
+  });
+
+  ipcMain.on('set-lyric-lock-state', (_, isLocked: boolean) => {
+    isLyricLocked = isLocked;
+    if (lyricWindow && !lyricWindow.isDestroyed()) {
+      // 锁定时禁用 resize，避免鼠标移到边缘仍显示调整光标
+      lyricWindow.setResizable(!isLocked);
+      // 设置初始穿透状态，后续 polling 会按实际位置纠正
+      lyricWindow.setIgnoreMouseEvents(isLocked, { forward: true });
+    }
+    syncMousePresenceTracking();
   });
 
   // 处理鼠标事件

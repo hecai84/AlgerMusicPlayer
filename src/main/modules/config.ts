@@ -1,8 +1,9 @@
 import { app, ipcMain } from 'electron';
 import Store from 'electron-store';
+import * as path from 'path';
 
+import { createDefaultShortcuts, type ShortcutsConfig } from '../../shared/shortcuts';
 import set from '../set.json';
-import { defaultShortcuts } from './shortcuts';
 
 type SetConfig = {
   isProxy: boolean;
@@ -26,10 +27,15 @@ type SetConfig = {
   language: string;
   showTopAction: boolean;
   enableGpuAcceleration: boolean;
+  downloadPath: string;
+  enableDiskCache: boolean;
+  diskCacheDir: string;
+  diskCacheMaxSizeMB: number;
+  diskCacheCleanupPolicy: 'lru' | 'fifo';
 };
 interface StoreType {
   set: SetConfig;
-  shortcuts: typeof defaultShortcuts;
+  shortcuts: ShortcutsConfig;
 }
 
 let store: Store<StoreType>;
@@ -42,11 +48,22 @@ export function initializeConfig() {
     name: 'config',
     defaults: {
       set: set as SetConfig,
-      shortcuts: defaultShortcuts
+      shortcuts: createDefaultShortcuts()
     }
   });
 
   store.get('set.downloadPath') || store.set('set.downloadPath', app.getPath('downloads'));
+  store.get('set.diskCacheDir') ||
+    store.set('set.diskCacheDir', path.join(app.getPath('userData'), 'cache'));
+  if (store.get('set.diskCacheMaxSizeMB') === undefined) {
+    store.set('set.diskCacheMaxSizeMB', 4096);
+  }
+  if (!store.get('set.diskCacheCleanupPolicy')) {
+    store.set('set.diskCacheCleanupPolicy', 'lru');
+  }
+  if (store.get('set.enableDiskCache') === undefined) {
+    store.set('set.enableDiskCache', true);
+  }
 
   // 定义ipcRenderer监听事件
   ipcMain.on('set-store-value', (_, key, value) => {

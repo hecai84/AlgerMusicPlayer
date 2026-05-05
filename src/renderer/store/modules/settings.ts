@@ -1,4 +1,4 @@
-import { cloneDeep, merge } from 'lodash';
+import { cloneDeep, isArray, mergeWith } from 'lodash';
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
@@ -14,11 +14,14 @@ import {
   watchSystemTheme
 } from '@/utils/theme';
 
+import { type AppUpdateState,createDefaultAppUpdateState } from '../../../shared/appUpdate';
+
 export const useSettingsStore = defineStore('settings', () => {
   const theme = ref<ThemeType>(getCurrentTheme());
   const isMobile = ref(false);
   const isMiniMode = ref(false);
   const showUpdateModal = ref(false);
+  const appUpdateState = ref<AppUpdateState>(createDefaultAppUpdateState());
   const showArtistDrawer = ref(false);
   const currentArtistId = ref<number | null>(null);
   const systemFonts = ref<{ label: string; value: string }[]>([
@@ -55,8 +58,16 @@ export const useSettingsStore = defineStore('settings', () => {
       ? window.electron.ipcRenderer.sendSync('get-store-value', 'set')
       : JSON.parse(localStorage.getItem('appSettings') || '{}');
 
+    // 自定义合并策略：如果是数组，直接使用源数组（覆盖默认值）
+    const customizer = (_objValue: any, srcValue: any) => {
+      if (isArray(srcValue)) {
+        return srcValue;
+      }
+      return undefined;
+    };
+
     // 合并默认设置和保存的设置
-    const mergedSettings = merge({}, setDataDefault, savedSettings);
+    const mergedSettings = mergeWith({}, setDataDefault, savedSettings, customizer);
 
     // 更新设置并返回
     setSetData(mergedSettings);
@@ -137,6 +148,10 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const setShowUpdateModal = (value: boolean) => {
     showUpdateModal.value = value;
+  };
+
+  const setAppUpdateState = (value: AppUpdateState) => {
+    appUpdateState.value = value;
   };
 
   const setShowArtistDrawer = (show: boolean) => {
@@ -255,6 +270,7 @@ export const useSettingsStore = defineStore('settings', () => {
     isMobile,
     isMiniMode,
     showUpdateModal,
+    appUpdateState,
     showArtistDrawer,
     currentArtistId,
     systemFonts,
@@ -264,6 +280,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setAutoTheme,
     setMiniMode,
     setShowUpdateModal,
+    setAppUpdateState,
     setShowArtistDrawer,
     setCurrentArtistId,
     setSystemFonts,

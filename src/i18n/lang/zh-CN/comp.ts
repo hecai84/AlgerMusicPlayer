@@ -1,4 +1,8 @@
 export default {
+  more: '更多',
+  homeListItem: {
+    loading: '加载中...'
+  },
   installApp: {
     description: '安装应用程序，获得更好的体验',
     noPrompt: '不再提示',
@@ -33,11 +37,16 @@ export default {
     title: '发现新版本',
     currentVersion: '当前版本',
     cancel: '暂不更新',
+    checking: '检查更新中...',
     prepareDownload: '准备下载...',
     downloading: '下载中...',
+    readyToInstall: '更新包已下载完成，可以立即安装',
     nowUpdate: '立即更新',
     downloadFailed: '下载失败，请重试或手动下载',
     startFailed: '启动下载失败，请重试或手动下载',
+    autoUpdateFailed: '自动更新失败',
+    openOfficialSite: '前往官网更新',
+    manualFallbackHint: '自动更新失败后，可前往官网下载安装最新版本。',
     noDownloadUrl: '未找到适合当前系统的安装包，请手动下载',
     installConfirmTitle: '安装更新',
     installConfirmContent: '是否关闭应用并安装更新？',
@@ -49,6 +58,27 @@ export default {
     copySuccess: '路径已复制到剪贴板',
     copyFailed: '复制失败',
     backgroundDownload: '后台下载'
+  },
+  disclaimer: {
+    title: '使用须知',
+    warning: '本应用为开发测试版本，功能尚不完善，可能存在较多问题和 Bug，仅供学习交流使用。',
+    item1: '本应用仅供个人学习、研究和技术交流使用，请勿用于任何商业用途。',
+    item2: '请在下载后 24 小时内删除，如需长期使用请支持正版音乐服务。',
+    item3: '使用本应用即表示您理解并承担相关风险，开发者不对任何损失负责。',
+    agree: '我已阅读并同意',
+    disagree: '不同意并退出'
+  },
+  donate: {
+    title: '支持开发者',
+    subtitle: '您的支持是我前进的动力',
+    tip: '捐赠完全自愿，不捐赠也可以正常使用所有功能，感谢您的理解与支持！',
+    wechat: '微信',
+    alipay: '支付宝',
+    wechatQR: '微信收款码',
+    alipayQR: '支付宝收款码',
+    scanTip: '请使用手机扫描上方二维码进行捐赠',
+    enterApp: '进入应用',
+    noForce: '不强制捐赠，点击即可进入'
   },
   coffee: {
     title: '请我喝咖啡',
@@ -77,7 +107,68 @@ export default {
     songlist: '每日推荐列表'
   },
   recommendSonglist: {
-    title: '本周最热音乐'
+    title: '本周最热音乐',
+    empty: '暂无推荐歌单'
+  },
+  dailyRecommend: {
+    title: '每日推荐',
+    badge: '推荐',
+    empty: '暂无推荐歌曲',
+    intelligenceHint: '开启心动模式，发现更多喜欢的音乐'
+  },
+  recommendMV: {
+    title: '推荐MV'
+  },
+  newAlbum: {
+    title: '专辑',
+    empty: '暂无新专辑'
+  },
+  recommendNewMusic: {
+    title: '新歌速递'
+  },
+  privateContent: {
+    title: '独家放送'
+  },
+  djProgram: {
+    title: '推荐电台'
+  },
+  homeHero: {
+    dailyRecommend: '每日推荐',
+    songs: '首',
+    playNow: '立即播放',
+    intelligenceMode: '心动模式',
+    intelligenceModeOn: '心动中',
+    intelligenceModeDesc: '开启智能推荐播放',
+    intelligenceModeActiveDesc: '根据你的喜好智能推荐',
+    startIntelligence: '开启心动',
+    stopIntelligence: '关闭心动',
+    playing: '播放中',
+    toplistDesc: '热门榜单',
+    mvDesc: '音乐视频',
+    playlistDesc: '精选歌单',
+    personalFm: '私人FM',
+    discoverMusic: '发现新音乐',
+    personalFmDesc: '根据你的喜好推荐',
+    recentPlays: '最近播放',
+    viewAll: '查看全部',
+    followedArtists: '关注歌手',
+    newSongs: '首新歌',
+    fromFollowedArtists: '来自你关注的歌手',
+    recommendNewMusic: '推荐新音乐',
+    newSongExpress: '新歌速递',
+    discoverNewReleases: '发现最新发行的好歌',
+    hotPlaylists: '精选歌单',
+    hotArtists: '热门歌手',
+    hotArtistsTitle: '热门艺人',
+    hotArtistsDesc: '当下最受欢迎的歌手',
+    fmTrash: '不喜欢',
+    fmNext: '下一首',
+    quickNav: {
+      myFavorite: '我的收藏',
+      playHistory: '播放历史',
+      myProfile: '我的主页',
+      toplist: '排行榜'
+    }
   },
   searchBar: {
     login: '登录',
@@ -92,7 +183,13 @@ export default {
     zoom: '页面缩放',
     zoom100: '标准缩放100%',
     resetZoom: '点击重置缩放',
-    zoomDefault: '标准缩放'
+    zoomDefault: '标准缩放',
+    tabPlaylist: '播放列表',
+    tabMv: 'MV',
+    tabCharts: '排行榜',
+    cancelSearch: '取消',
+    intelligenceMode: '心动模式',
+    exitIntelligence: '退出心动模式'
   },
   titleBar: {
     closeTitle: '请选择关闭方式',
@@ -117,7 +214,15 @@ export default {
     cancelCollect: '取消收藏',
     addToPlaylist: '添加到播放列表',
     addToPlaylistSuccess: '添加到播放列表成功',
-    songsAlreadyInPlaylist: '歌曲已存在于播放列表中'
+    songsAlreadyInPlaylist: '歌曲已存在于播放列表中',
+    locateCurrent: '定位当前播放',
+    scrollToTop: '回到顶部',
+    compactLayout: '紧凑布局',
+    normalLayout: '常规布局',
+    historyRecommend: '历史日推',
+    fetchDatesFailed: '获取日期列表失败',
+    fetchSongsFailed: '获取歌曲列表失败',
+    noSongs: '暂无歌曲'
   },
   playlist: {
     import: {
@@ -143,6 +248,7 @@ export default {
       albumNamePlaceholder: '专辑名称',
       addSongButton: '添加歌曲',
       addLinkButton: '添加链接',
+      options: '选项',
       importToStarPlaylist: '导入到我喜欢的音乐',
       playlistNamePlaceholder: '请输入歌单名称',
       importButton: '开始导入',
@@ -186,5 +292,41 @@ export default {
   list: '歌单',
   mv: 'MV',
   home: '首页',
-  search: '搜索'
+  search: '搜索',
+  album: '专辑',
+  localMusic: '本地音乐',
+  pages: {
+    toplist: {
+      desc: '最具权威的音乐榜单，发现当下最热门的音乐'
+    },
+    mv: {
+      desc: '探索精彩视频内容',
+      loadingMore: '加载更多中...',
+      noMore: '— 已加载全部内容 —',
+      area: {
+        all: '全部',
+        mainland: '内地',
+        hktw: '港台',
+        western: '欧美',
+        japan: '日本',
+        korea: '韩国'
+      }
+    },
+    list: {
+      desc: '发现更多好听的歌单',
+      dailyRecommend: '每日推荐'
+    },
+    search: {
+      desc: '探索当下最热门的搜索趋势'
+    },
+    album: {
+      area: {
+        all: '全部',
+        chinese: '华语',
+        western: '欧美',
+        korea: '韩国',
+        japan: '日本'
+      }
+    }
+  }
 };

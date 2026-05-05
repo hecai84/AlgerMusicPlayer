@@ -10,7 +10,7 @@ export default {
     network: '网络设置',
     system: '系统管理',
     donation: '捐赠支持',
-    regard: '关于'
+    about: '关于'
   },
   basic: {
     themeMode: '主题模式',
@@ -20,7 +20,7 @@ export default {
     language: '语言设置',
     languageDesc: '切换显示语言',
     tokenManagement: 'Cookie管理',
-    tokenManagementDesc: '管理网易云音乐登录Cookie',
+    tokenManagementDesc: '管理音乐登录Cookie',
     tokenStatus: '当前Cookie状态',
     tokenSet: '已设置',
     tokenNotSet: '未设置',
@@ -61,7 +61,7 @@ export default {
   },
   playback: {
     quality: '音质设置',
-    qualityDesc: '选择音乐播放音质（网易云VIP）',
+    qualityDesc: '选择音乐播放音质（不确保有效）',
     qualityOptions: {
       standard: '标准',
       higher: '较高',
@@ -84,6 +84,10 @@ export default {
     gdmusicInfo: 'GD音乐台可自动解析多个平台音源，自动选择最佳结果',
     autoPlay: '自动播放',
     autoPlayDesc: '重新打开应用时是否自动继续播放',
+    audioDevice: '音频输出设备',
+    audioDeviceDesc: '选择音频输出设备，如扬声器、耳机或蓝牙设备',
+    testAudio: '测试',
+    selectAudioDevice: '选择输出设备',
     showStatusBar: '是否显示状态栏控制功能',
     showStatusBarContent: '可以在您的mac状态栏显示音乐控制功能(重启后生效)',
 
@@ -95,11 +99,15 @@ export default {
 
     // 音源标签
     sourceLabels: {
-      migu: '咪咕音乐',
-      kugou: '酷狗音乐',
-      pyncmd: '网易云（内置）',
+      migu: 'migu',
+      kugou: 'kugou',
+      kuwo: 'kuwo',
+      pyncmd: 'pyncmd',
+      qq: 'qq',
+      joox: 'JOOX',
       bilibili: 'Bilibili',
-      gdmusic: 'GD音乐台',
+      gdmusic: 'gdmusic',
+      lxMusic: 'lxMusic',
       custom: '自定义 API'
     },
 
@@ -111,7 +119,38 @@ export default {
       notImported: '尚未导入自定义音源。',
       importSuccess: '成功导入音源: {name}',
       importFailed: '导入失败: {message}',
-      enableHint: '请先导入 JSON 配置文件才能启用'
+      enableHint: '请先导入 JSON 配置文件才能启用',
+      status: {
+        imported: '已导入自定义音源',
+        notImported: '未导入'
+      }
+    },
+    lxMusic: {
+      tabs: {
+        sources: '音源选择',
+        lxMusic: '落雪音源',
+        customApi: '自定义API'
+      },
+      scripts: {
+        title: '已导入的音源脚本',
+        importLocal: '本地导入',
+        importOnline: '在线导入',
+        urlPlaceholder: '输入落雪音源脚本 URL',
+        importBtn: '导入',
+        empty: '暂无已导入的落雪音源',
+        notConfigured: '未配置 (请去落雪音源Tab配置)',
+        importHint: '导入兼容的自定义 API 插件以扩展音源',
+        noScriptWarning: '请先导入落雪音源脚本',
+        noSelectionWarning: '请先选择一个落雪音源',
+        notFound: '音源不存在',
+        switched: '已切换到音源: {name}',
+        deleted: '已删除音源: {name}',
+        enterUrl: '请输入脚本 URL',
+        invalidUrl: '无效的 URL 格式',
+        invalidScript: '无效的落雪音源脚本，未找到 globalThis.lx 相关代码',
+        nameRequired: '名称不能为空',
+        renameSuccess: '重命名成功'
+      }
     }
   },
   application: {
@@ -154,6 +193,35 @@ export default {
   system: {
     cache: '缓存管理',
     cacheDesc: '清除缓存',
+    diskCache: '磁盘缓存',
+    diskCacheDesc: '将播放过的音乐与歌词缓存到本地磁盘，提升二次播放速度',
+    cacheDirectory: '缓存目录',
+    cacheDirectoryDesc: '自定义音乐与歌词缓存保存目录',
+    selectDirectory: '选择目录',
+    openDirectory: '打开目录',
+    cacheMaxSize: '缓存上限',
+    cacheMaxSizeDesc: '达到上限后将自动清理最旧缓存',
+    cleanupPolicy: '清理策略',
+    cleanupPolicyDesc: '达到缓存上限时的自动清理规则',
+    cleanupPolicyOptions: {
+      lru: '最近最少使用',
+      fifo: '先进先出'
+    },
+    cacheStatus: '缓存状态',
+    cacheStatusDesc: '已用 {used} / 上限 {limit}',
+    cacheStatusDetail: '音乐 {musicCount} 首，歌词 {lyricCount} 首',
+    manageDiskCache: '手动清理磁盘缓存',
+    manageDiskCacheDesc: '按缓存类型进行清理',
+    clearMusicCache: '清理音乐缓存',
+    clearLyricCache: '清理歌词缓存',
+    clearAllCache: '清理全部缓存',
+    switchDirectoryMigrateTitle: '检测到已有缓存',
+    switchDirectoryMigrateContent: '是否将旧目录缓存迁移到新目录？',
+    switchDirectoryMigrateConfirm: '迁移',
+    switchDirectoryDestroyTitle: '是否销毁旧缓存',
+    switchDirectoryDestroyContent: '不迁移时，是否销毁旧目录缓存文件？',
+    switchDirectoryDestroyConfirm: '销毁',
+    switchDirectoryKeepOld: '保留旧缓存',
     cacheClearTitle: '请选择要清除的缓存类型：',
     cacheTypes: {
       history: {
@@ -188,7 +256,14 @@ export default {
     restart: '重启',
     restartDesc: '重启应用',
     messages: {
-      clearSuccess: '清除成功，部分设置在重启后生效'
+      clearSuccess: '清除成功，部分设置在重启后生效',
+      diskCacheClearSuccess: '磁盘缓存已清理',
+      diskCacheClearFailed: '清理磁盘缓存失败',
+      diskCacheStatsLoadFailed: '读取缓存状态失败',
+      switchDirectorySuccess: '缓存目录已切换，旧缓存已保留',
+      switchDirectoryFailed: '缓存目录切换失败',
+      switchDirectoryMigrated: '缓存目录已切换，已迁移 {count} 个缓存文件',
+      switchDirectoryDestroyed: '缓存目录已切换，已销毁 {count} 个旧缓存文件'
     }
   },
   about: {
@@ -198,6 +273,7 @@ export default {
     latest: '当前已是最新版本',
     hasUpdate: '发现新版本',
     gotoUpdate: '前往更新',
+    manualUpdate: '官网更新',
     gotoGithub: '前往 Github',
     author: '作者',
     authorDesc: 'algerkong 点个star🌟呗',
@@ -216,6 +292,7 @@ export default {
       display: '显示',
       interface: '界面',
       typography: '文字',
+      background: '背景',
       mobile: '移动端'
     },
     pureMode: '纯净模式',
@@ -238,6 +315,12 @@ export default {
       medium: '中',
       large: '大'
     },
+    fontWeight: '字体粗细',
+    fontWeightMarks: {
+      thin: '细',
+      normal: '常规',
+      bold: '粗'
+    },
     letterSpacing: '字间距',
     letterSpacingMarks: {
       compact: '紧凑',
@@ -250,6 +333,7 @@ export default {
       default: '默认',
       loose: '宽松'
     },
+    contentWidth: '内容区宽度',
     mobileLayout: '移动端布局',
     layoutOptions: {
       default: '默认',
@@ -263,7 +347,46 @@ export default {
       full: '全屏'
     },
     lyricLines: '歌词行数',
-    mobileUnavailable: '此设置仅在移动端可用'
+    mobileUnavailable: '此设置仅在移动端可用',
+    // 背景设置
+    background: {
+      useCustomBackground: '使用自定义背景',
+      backgroundMode: '背景模式',
+      modeOptions: {
+        solid: '纯色',
+        gradient: '渐变',
+        image: '图片',
+        css: 'CSS'
+      },
+      solidColor: '选择颜色',
+      presetColors: '预设颜色',
+      customColor: '自定义颜色',
+      gradientEditor: '渐变编辑器',
+      gradientColors: '渐变颜色',
+      gradientDirection: '渐变方向',
+      directionOptions: {
+        toBottom: '上到下',
+        toRight: '左到右',
+        toBottomRight: '左上到右下',
+        angle45: '45度',
+        toTop: '下到上',
+        toLeft: '右到左'
+      },
+      addColor: '添加颜色',
+      removeColor: '移除颜色',
+      imageUpload: '上传图片',
+      imagePreview: '图片预览',
+      clearImage: '清除图片',
+      imageBlur: '模糊度',
+      imageBrightness: '明暗度',
+      customCss: '自定义 CSS 样式',
+      customCssPlaceholder: '输入 CSS 样式,如: background: linear-gradient(...)',
+      customCssHelp: '支持任意 CSS background 属性',
+      reset: '重置为默认',
+      fileSizeLimit: '图片大小限制: 20MB',
+      invalidImageFormat: '无效的图片格式',
+      imageTooLarge: '图片过大,请选择小于 20MB 的图片'
+    }
   },
   translationEngine: '歌詞翻譯引擎',
   translationEngineOptions: {
@@ -294,28 +417,61 @@ export default {
     title: '快捷键设置',
     shortcut: '快捷键',
     shortcutDesc: '自定义快捷键',
+    summaryReady: '当前快捷键配置可保存',
+    summaryRecording: '正在录制新的快捷键组合',
+    summaryBlocked: '存在冲突或无效项，请先修正',
+    platformHintMac: 'macOS 下 CommandOrControl 会显示为 Cmd',
+    platformHintWindows: 'Windows 下 CommandOrControl 会显示为 Ctrl',
+    platformHintLinux: 'Linux 下 CommandOrControl 会显示为 Ctrl',
+    platformHintGeneric: '不同系统下 CommandOrControl 会自动适配',
+    enabledCount: '已启用',
+    recordingTip: '点击快捷键框后按下组合键，Esc 取消，Delete 可禁用该项',
     shortcutConflict: '快捷键冲突',
     inputPlaceholder: '点击输入快捷键',
+    clickToRecord: '点击后按下组合键',
+    recording: '录制中...',
     resetShortcuts: '恢复默认',
+    restoreSingle: '恢复',
     disableAll: '全部禁用',
     enableAll: '全部启用',
+    groups: {
+      playback: '播放控制',
+      sound: '音量与收藏',
+      window: '窗口控制'
+    },
     togglePlay: '播放/暂停',
+    togglePlayDesc: '切换当前歌曲播放状态',
     prevPlay: '上一首',
+    prevPlayDesc: '切换到上一首歌曲',
     nextPlay: '下一首',
+    nextPlayDesc: '切换到下一首歌曲',
     volumeUp: '音量增加',
+    volumeUpDesc: '提高播放器音量',
     volumeDown: '音量减少',
+    volumeDownDesc: '降低播放器音量',
     toggleFavorite: '收藏/取消收藏',
+    toggleFavoriteDesc: '收藏或取消当前歌曲',
     toggleWindow: '显示/隐藏窗口',
+    toggleWindowDesc: '快速显示或隐藏主窗口',
     scopeGlobal: '全局',
     scopeApp: '应用内',
     enabled: '启用',
     disabled: '禁用',
+    issueInvalid: '组合无效',
+    issueReserved: '系统保留',
+    registrationWarningTitle: '以下快捷键未能注册，请更换组合后重试',
+    registrationOccupied: '被系统或其他应用占用',
+    registrationInvalid: '键位格式无效',
     messages: {
       resetSuccess: '已恢复默认快捷键，请记得保存',
       conflict: '存在冲突的快捷键，请重新设置',
       saveSuccess: '快捷键设置已保存',
       saveError: '保存快捷键失败，请重试',
+      saveValidationError: '快捷键校验未通过，请检查后重试',
+      partialRegistered: '已保存，但部分全局快捷键未注册成功',
       cancelEdit: '已取消修改',
+      clearToDisable: '已禁用该快捷键',
+      invalidShortcut: '快捷键无效，请输入有效组合',
       disableAll: '已禁用所有快捷键，请记得保存',
       enableAll: '已启用所有快捷键，请记得保存'
     }
@@ -332,7 +488,7 @@ export default {
   },
   cookie: {
     title: 'Cookie设置',
-    description: '请输入网易云音乐的Cookie：',
+    description: '请输入音乐的Cookie：',
     placeholder: '请粘贴完整的Cookie...',
     help: {
       format: 'Cookie通常以 "MUSIC_U=" 开头',

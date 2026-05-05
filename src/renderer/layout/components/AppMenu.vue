@@ -57,7 +57,7 @@ const props = defineProps({
   },
   selectColor: {
     type: String,
-    default: '#10B981'
+    default: '#22c55e'
   },
   menus: {
     type: Array as any,
@@ -172,7 +172,7 @@ const toggleMenu = () => {
   .app-menu {
     max-width: 100%;
     width: 100vw;
-    position: fixed;
+    position: relative;
     bottom: 0;
     left: 0;
     z-index: 99999;

@@ -14,6 +14,12 @@ export default {
   addCorrection: '{num}초 앞당기기',
   subtractCorrection: '{num}초 지연',
   playFailed: '현재 곡 재생 실패, 다음 곡 재생',
+  parseFailedPlayNext: '곡 분석 실패, 다음 곡 재생',
+  consecutiveFailsError:
+    '재생 오류가 발생했습니다. 네트워크 문제 또는 유효하지 않은 음원일 수 있습니다. 재생 목록을 변경하거나 나중에 다시 시도하세요',
+  playListEnded: '재생 목록의 마지막 곡에 도달했습니다',
+  autoResumed: '자동으로 재생이 재개되었습니다',
+  resumeFailed: '재생 재개에 실패했습니다. 수동으로 시도해 주세요',
   playMode: {
     sequence: '순차 재생',
     loop: '한 곡 반복',
@@ -67,7 +73,17 @@ export default {
     unFavorite: '{name} 즐겨찾기 해제됨',
     miniPlayBar: '미니 재생바',
     playbackSpeed: '재생 속도',
-    advancedControls: '고급 설정'
+    advancedControls: '고급 설정',
+    intelligenceMode: {
+      title: '인텔리전스 모드',
+      needCookieLogin: '쿠키 방식으로 로그인한 후 인텔리전스 모드를 사용할 수 있습니다',
+      noFavoritePlaylist: '내가 좋아하는 음악 재생목록을 찾을 수 없습니다',
+      noLikedSongs: '아직 좋아한 노래가 없습니다',
+      loading: '인텔리전스 모드를 불러오는 중',
+      success: '총 {count}곡을 불러왔습니다',
+      failed: '인텔리전스 모드 목록을 가져오는 데 실패했습니다',
+      error: '인텔리전스 모드 재생 오류'
+    }
   },
   eq: {
     title: '이퀄라이저',
@@ -92,6 +108,11 @@ export default {
       acoustic: '어쿠스틱',
       custom: '사용자 정의'
     }
+  },
+  // 플레이어 설정
+  settings: {
+    title: '재생 설정',
+    playbackSpeed: '재생 속도'
   },
   sleepTimer: {
     title: '타이머 종료',

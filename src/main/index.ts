@@ -1,17 +1,22 @@
 import { electronApp, optimizer } from '@electron-toolkit/utils';
-import { app, ipcMain, nativeImage } from 'electron';
+import { app, ipcMain, nativeImage, session } from 'electron';
 import { join } from 'path';
 
 import type { Language } from '../i18n/main';
 import i18n from '../i18n/main';
 import { loadLyricWindow } from './lyric';
+import { initializeCacheManager } from './modules/cache';
 import { initializeConfig } from './modules/config';
+import { initializeDownloadManager, setDownloadManagerWindow } from './modules/downloadManager';
 import { initializeFileManager } from './modules/fileManager';
 import { initializeFonts } from './modules/fonts';
+import { initializeLocalMusicScanner } from './modules/localMusicScanner';
 import { initializeLoginWindow } from './modules/loginWindow';
+import { initLxMusicHttp } from './modules/lxMusicHttp';
+import { initializeMpris, updateMprisCurrentSong, updateMprisPlayState } from './modules/mpris';
 import { initializeOtherApi } from './modules/otherApi';
 import { initializeRemoteControl } from './modules/remoteControl';
-import { initializeShortcuts, registerShortcuts } from './modules/shortcuts';
+import { initializeShortcuts } from './modules/shortcuts';
 import { initializeTray, updateCurrentSong, updatePlayState, updateTrayMenu } from './modules/tray';
 import { setupUpdateHandlers } from './modules/update';
 import { createMainWindow, initializeWindowManager, setAppQuitting } from './modules/window';
@@ -39,6 +44,10 @@ function initialize(configStore: any) {
 
   // 初始化文件管理
   initializeFileManager();
+  // 初始化下载管理
+  initializeDownloadManager();
+  // 初始化歌词缓存管理
+  initializeCacheManager();
   // 初始化其他 API （搜索建议等）
   initializeOtherApi();
   // 初始化窗口管理
@@ -47,15 +56,23 @@ function initialize(configStore: any) {
   initializeFonts();
   // 初始化登录窗口
   initializeLoginWindow();
+  // 初始化本地音乐扫描模块
+  initializeLocalMusicScanner();
 
   // 创建主窗口
   mainWindow = createMainWindow(icon);
+
+  // 设置下载管理器窗口引用
+  setDownloadManagerWindow(mainWindow);
 
   // 初始化托盘
   initializeTray(iconPath, mainWindow);
 
   // 启动音乐API
   startMusicApi();
+
+  // 初始化落雪音乐 HTTP 请求处理
+  initLxMusicHttp();
 
   // 加载歌词窗口
   loadLyricWindow(ipcMain, mainWindow);
@@ -65,6 +82,9 @@ function initialize(configStore: any) {
 
   // 初始化远程控制服务
   initializeRemoteControl(mainWindow);
+
+  // 初始化 MPRIS 服务 (Linux)
+  initializeMpris(mainWindow);
 
   // 初始化更新处理程序
   setupUpdateHandlers(mainWindow);
@@ -76,6 +96,11 @@ const isSingleInstance = app.requestSingleInstanceLock();
 if (!isSingleInstance) {
   app.quit();
 } else {
+  // 禁用 Chromium 内置的 MediaSession MPRIS 服务，避免重复显示
+  if (process.platform === 'linux') {
+    app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
+  }
+
   // 在应用准备就绪前初始化GPU加速设置
   // 必须在 app.ready 之前调用 disableHardwareAcceleration
   try {
@@ -117,6 +142,19 @@ if (!isSingleInstance) {
     // 初始化窗口大小管理器
     initWindowSizeManager();
 
+    // 设置媒体设备权限 - 允许枚举音频输出设备
+    session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+      if (permission === ('media' as any) || permission === ('audioCapture' as any)) {
+        callback(true);
+        return;
+      }
+      callback(true);
+    });
+
+    session.defaultSession.setPermissionCheckHandler(() => {
+      return true;
+    });
+
     // 重新初始化配置管理以获取完整的配置存储
     const store = initializeConfig();
 
@@ -127,11 +165,6 @@ if (!isSingleInstance) {
     app.on('activate', () => {
       if (mainWindow === null) initialize(store);
     });
-  });
-
-  // 监听快捷键更新
-  ipcMain.on('update-shortcuts', () => {
-    registerShortcuts(mainWindow);
   });
 
   // 监听语言切换
@@ -147,11 +180,13 @@ if (!isSingleInstance) {
   // 监听播放状态变化
   ipcMain.on('update-play-state', (_, playing: boolean) => {
     updatePlayState(playing);
+    updateMprisPlayState(playing);
   });
 
   // 监听当前歌曲变化
   ipcMain.on('update-current-song', (_, song: any) => {
     updateCurrentSong(song);
+    updateMprisCurrentSong(song);
   });
 
   // 所有窗口关闭时的处理
